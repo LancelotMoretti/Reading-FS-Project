@@ -1,6 +1,6 @@
 #include <windows.h>
+#include <iostream>
 
-#include <stdio.h>
 int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[512]) {
     int retCode = 0;
     DWORD bytesRead;
@@ -14,25 +14,27 @@ int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[512]) {
         0,                      // File attributes
         NULL);                  // Handle to template
     
+    #include <iostream>
+
     if (device == INVALID_HANDLE_VALUE) {   // Open Error
-        printf("CreateFile: %u\n", GetLastError());
-        return 1;
+        std::cout << "CreateFile: " << GetLastError() << std::endl;
+        return false;
     }
 
     SetFilePointer(device, readPoint, NULL, FILE_BEGIN);    //Set a Point to Read
 
     if (!ReadFile(device, sector, 512, &bytesRead, NULL)) {
-        printf("ReadFile: %u\n", GetLastError());
+        std::cout << "ReadFile: " << GetLastError() << std::endl;
     }
     else {
-        printf("Success!\n");
+        std::cout << "Success!" << std::endl;
     }
 
-    return readPoint;
+    return true;
 }
 
 int main(int argc, char ** argv) {
     BYTE sector[512];
-    ReadSector(L"\\\\.\\C:", 0, sector);
+    ReadSector(L"\\\\.\\D:", 0, sector);
     return 0;
 }
