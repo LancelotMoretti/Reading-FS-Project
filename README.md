@@ -7,6 +7,7 @@ OS reading FAT32 and NTFS file system project
 2. runas /user:Administrator main.exe
     (or main.exe -> Properties -> Compatibility -> Run this program as an administrator
     ./main.exe)
+    (or open Visual Studio Code as an administrator and ./main.exe)
 ```
 
 ## How to use
@@ -15,4 +16,5 @@ OS reading FAT32 and NTFS file system project
 2. runas /user:Administrator main.exe <drive_letter>
     (or main.exe -> Properties -> Compatibility -> Run this program as an administrator
     ./main.exe <drive_letter>)
+    (or open Visual Studio Code as an administrator and ./main.exe <drive_letter>)
 ```
