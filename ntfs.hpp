@@ -7,8 +7,14 @@ public:
     NTFS() = default;
 
 private:
-    int BytesPerSector;
-    //...
+    int ReservedSectors;
+    int HiddenSectors;
+    int TotalSectors;
+    int LogicalClusterNumberForMFT;
+    int LogicalClusterNumberForMFTMirr;
+    int ClustersPerMFTRecord;
+    int ClustersPerIndexBlock;
+
 };
 
 #endif /* NTFS_HPP_ */

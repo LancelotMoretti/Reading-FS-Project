@@ -6,6 +6,8 @@ public:
     Drive() = default;
 
 protected:
+    int BytesPerSector;
+    int SectorsPerCluster;
 
 };
 

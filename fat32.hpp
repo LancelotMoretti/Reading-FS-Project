@@ -7,8 +7,12 @@ public:
     Fat32() = default;
 
 private:
-    int SectorPerCluster;
-    //...
+    int SectorsPerBootSector;
+    int NumOfFAT;
+    int SizeOfVolume;
+    int SectorsPerFAT;
+    
+
 };
 
 #endif /* FAT32_HPP_ */
