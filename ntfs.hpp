@@ -10,10 +10,8 @@ private:
     int ReservedSectors;
     int HiddenSectors;
     int TotalSectors;
-    int LogicalClusterNumberForMFT;
-    int LogicalClusterNumberForMFTMirr;
-    int ClustersPerMFTRecord;
-    int ClustersPerIndexBlock;
+    int StartOfMFT;
+    int StartOfMFTMirr;
 
 };
 

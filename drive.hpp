@@ -8,6 +8,10 @@ public:
 protected:
     int BytesPerSector;
     int SectorsPerCluster;
+    int SectorsPerTrack;
+    int NumOfHeads;
+
+    int NextReadingOffset;
 
 };
 

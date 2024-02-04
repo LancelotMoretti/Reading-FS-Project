@@ -11,7 +11,8 @@ private:
     int NumOfFAT;
     int SizeOfVolume;
     int SectorsPerFAT;
-    
+    int StartOfRDET;
+    int SizeOfRDET;
 
 };
 
