@@ -12,4 +12,4 @@
 - [ ] Read RDET + SDET
 
 ### Bùi Tá Phát:
-- [ ] Read file content
+- [x] Read file content

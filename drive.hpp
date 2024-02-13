@@ -1,5 +1,6 @@
 #ifndef DRIVE_HPP_
 #define DRIVE_HPP_
+#include "utilities.hpp"
 
 class Drive {
 public:

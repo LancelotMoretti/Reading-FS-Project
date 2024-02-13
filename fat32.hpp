@@ -7,12 +7,18 @@ public:
     Fat32() = default;
 
 private:
+    LPCWSTR drive;
     int SectorsPerBootSector;
     int NumOfFAT;
     int SizeOfVolume;
     int SectorsPerFAT;
     int StartOfRDET;
     int SizeOfRDET;
+
+    void ReadAndDisplayFileData(int startCluster, int fileSize);
+    int GetNextDataCluster(int currentCluster);
+    void ReadDataCluster(int cluster, std::vector<BYTE> buffer);
+    void ReadDataSector(int sector, std::vector<BYTE> buffer);
 
 };
 
