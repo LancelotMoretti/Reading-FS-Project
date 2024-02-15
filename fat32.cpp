@@ -7,8 +7,8 @@ void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
     buffer.resize(BytesPerSector * SectorsPerCluster);
     int currentCluster = startCluster;
     int remainingBytes = fileSize;
-    while (remainingBytes > 0) {
-        this->ReadDataCluster(currentCluster, buffer);
+    while (remainingBytes > 0 && currentCluster < 0x0FFFFFF8) {
+        this->ReadDataCluster(currentCluster, buffer); // SomeFunction(currentCluster)
         int bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
         for (int i = 0; i < bytesToRead; i++) {
             std::cout << buffer[i];

@@ -1,6 +1,6 @@
 #include "utilities.hpp"
 
-int ReadSector(LPCWSTR drive, int readPoint, BYTE* sector, int bytesPerSector) {
+int readSector(LPCWSTR drive, int readPoint, BYTE* sector, int bytesPerSector) {
     int retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
