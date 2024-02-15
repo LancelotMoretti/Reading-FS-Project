@@ -7,5 +7,6 @@
 
 int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[], int bytesPerSector);
 int rdetStartPoint(BYTE sector[]);
+int sdetStartPoint(BYTE bootSector[], int cluster);
 
 #endif /* UTILITIES_HPP_ */

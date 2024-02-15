@@ -38,3 +38,11 @@ int rdetStartPoint(BYTE sector[]) {
     int k = sector[45] * (1 << 7) * 2 + sector[44];
     return sb + sf * nf + (k - 2) * sc;
 }
+
+int sdetStartPoint(BYTE bootSector[], int cluster) {
+    int sb = bootSector[15] * (1 << 7) * 2 + bootSector[14];
+    int nf = bootSector[16];
+    int sf = bootSector[37] * (1 << 7) * 2 + bootSector[36];
+    int sc = bootSector[13];
+    return sb + sf * nf + (cluster - 2) * sc;
+}

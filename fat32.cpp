@@ -48,7 +48,20 @@ std::ostream& operator << (std::ostream& out, const Entry& cur) {
 }
 
 /////////////////// RDET / SDET
-std::vector<Entry> readRDET(LPCWSTR drive, int readPoint) {
+void printFileAndFolder(std::vector<Entry> vect) {
+    bool isPrinted = false;
+    for (int i = 0; i < vect.size(); i++) {
+        if (vect[i].getAttr() == "Archive" || vect[i].getAttr() == "Subdirectory") {
+            std::cout << vect[i] << std::endl;
+            isPrinted = true;
+        }
+    }
+    if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
+}
+
+std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
+    int start = isRDET ? 0 : 64; // True: RDET, False: SDET
+
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[512];
@@ -64,13 +77,14 @@ std::vector<Entry> readRDET(LPCWSTR drive, int readPoint) {
 
     while (!isStopped && ReadFile(device, sector, 512, &bytesRead, NULL)) {
         // Iterate through all entries of current sector
-        for (int i = 0; i < 512; i += 32) {
+        for (int i = start; i < 512; i += 32) {
             if (sector[i] == 0xE5) continue; // Deleted entry
             if (sector[i] == 0x00) { // End of RDET table
                 isStopped = true;
                 break;
             }
 
+            // Read data to Entry object
             if (sector[i + 11] == 0x0F) { // Sub entry
                 std::string tempName = "";
                 for (int j = 1; j < 11; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
@@ -147,7 +161,7 @@ std::vector<Entry> readRDET(LPCWSTR drive, int readPoint) {
                 cur.setDate(curDate);
 
                 // Cluster
-                cur.setCluster(sector[i + 27] * (1 << 7) * 2 + sector[i + 26]);
+                cur.setCluster(sector[i + 21] * (1 << 7) * 2 + sector[i + 20] + sector[i + 27] * (1 << 7) * 2 + sector[i + 26]);
 
                 // Size
                 cur.setSize((sector[i + 31] * (1 << 7) * (1 << 7) * (1 << 7) * 8) + (sector[i + 30] * (1 << 7) * (1 << 7) * 4) + (sector[i + 29] * (1 << 7) * 2) + sector[i + 28]);

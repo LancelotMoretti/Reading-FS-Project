@@ -9,7 +9,7 @@
 - [ ] Read FAT table
 
 ### Đào Ngọc Thiện:
-- [ ] Read RDET + SDET
+- [x] Read RDET + SDET
 
 ### Bùi Tá Phát:
 - [x] Read file content
