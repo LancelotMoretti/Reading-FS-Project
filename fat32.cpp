@@ -1,5 +1,7 @@
 #include "fat32.hpp"
 
+// CLass Fat32
+
 void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
     std::vector<BYTE> buffer;
     buffer.resize(BytesPerSector * SectorsPerCluster);
@@ -12,28 +14,18 @@ void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
             std::cout << buffer[i];
         }
         remainingBytes -= bytesToRead;
-        currentCluster = this->GetNextDataCluster(currentCluster);
+        currentCluster = this->GetNextFATCluster(currentCluster);
     }
 }
 
-int Fat32::GetNextDataCluster(int currentCluster) {
-    int FATOffset = currentCluster * 4;
-    int FATSector = FATOffset / BytesPerSector;
-    int FATEntry = FATOffset % BytesPerSector;
-    std::vector<BYTE> buffer;
-    buffer.resize(BytesPerSector);
-    this->ReadDataSector(SectorsPerBootSector + FATSector, buffer);
-    return buffer[FATEntry] + (buffer[FATEntry + 1] << 8) + (buffer[FATEntry + 2] << 16) + (buffer[FATEntry + 3] << 24);
+int Fat32::GetNextFATCluster(int currentCluster) {
+    int nextCluster = 0;
+    return nextCluster;
 }
 
 void Fat32::ReadDataCluster(int cluster, std::vector<BYTE> buffer) {
-    for (int i = 0; i < SectorsPerCluster; i++) {
-        this->ReadDataSector(cluster * SectorsPerCluster + i, buffer);
-    }
-}
-
-void Fat32::ReadDataSector(int sector, std::vector<BYTE> buffer) {
-    ReadSector(L"\\\\.\\D:", sector * BytesPerSector, buffer.data(), BytesPerSector);
+    int readPoint = SectorsPerBootSector + (NumOfFAT * SectorsPerFAT) + (cluster - 2) * SectorsPerCluster;
+    readSector(this->drive, readPoint, buffer.data(), BytesPerSector * SectorsPerCluster);
 }
 
 std::ostream& operator << (std::ostream& out, const Entry& cur) {

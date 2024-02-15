@@ -1,6 +1,6 @@
 #include "utilities.hpp"
 
-int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[], int bytesPerSector) {
+int ReadSector(LPCWSTR drive, int readPoint, BYTE* sector, int bytesPerSector) {
     int retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -22,11 +22,13 @@ int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[], int bytesPerSector) 
 
     if (!ReadFile(device, sector, bytesPerSector, &bytesRead, NULL)) {
         std::cout << "ReadFile: " << GetLastError() << std::endl;
+        CloseHandle(device);
         return false;
     }
     else {
         std::cout << "Success!" << std::endl;
     }
+    CloseHandle(device);
     return true;
 }
 
