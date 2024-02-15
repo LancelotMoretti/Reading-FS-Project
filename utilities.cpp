@@ -29,3 +29,12 @@ int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[], int bytesPerSector) 
     }
     return true;
 }
+
+int rdetStartPoint(BYTE sector[]) {
+    int sb = sector[15] * (1 << 7) * 2 + sector[14];
+    int nf = sector[16];
+    int sf = sector[37] * (1 << 7) * 2 + sector[36];
+    int sc = sector[13];
+    int k = sector[45] * (1 << 7) * 2 + sector[44];
+    return sb + sf * nf + (k - 2) * sc;
+}

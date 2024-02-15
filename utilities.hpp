@@ -3,7 +3,9 @@
 #include <iostream>
 #include <Windows.h>
 #include <vector>
+#include <string>
 
 int ReadSector(LPCWSTR drive, int readPoint, BYTE sector[], int bytesPerSector);
+int rdetStartPoint(BYTE sector[]);
 
 #endif /* UTILITIES_HPP_ */
