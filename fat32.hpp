@@ -15,6 +15,7 @@ private:
     int StartOfRDET;
     int SizeOfRDET;
 
+    void ReadBootSector(std::vector<BYTE> buffer);
     void ReadAndDisplayFileData(int startCluster, int fileSize);
     int GetNextFATCluster(int currentCluster);
     void ReadDataCluster(int cluster, std::vector<BYTE> buffer);

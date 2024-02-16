@@ -2,6 +2,16 @@
 
 // CLass Fat32
 
+void Fat32::ReadBootSector(std::vector<BYTE> buffer) {
+    readSector(this->drive, 0, buffer.data(), 512);
+    this->SectorsPerBootSector = buffer[11] + (buffer[12] << 8);
+    this->NumOfFAT = buffer[16];
+    this->SizeOfVolume = buffer[32] + (buffer[33] << 8) + (buffer[34] << 16) + (buffer[35] << 24);
+    this->SectorsPerFAT = buffer[22] + (buffer[23] << 8);
+    this->StartOfRDET = this->SectorsPerBootSector + (this->NumOfFAT * this->SectorsPerFAT);
+    this->SizeOfRDET = (this->SizeOfVolume * 32) / 512;
+}
+
 void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
     std::vector<BYTE> buffer;
     buffer.resize(BytesPerSector * SectorsPerCluster);
