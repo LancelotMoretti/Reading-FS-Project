@@ -18,7 +18,7 @@ void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
     int currentCluster = startCluster;
     int remainingBytes = fileSize;
     while (remainingBytes > 0 && currentCluster < 0x0FFFFFF8) {
-        this->ReadDataCluster(currentCluster, buffer); // SomeFunction(currentCluster)
+        this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer); // SomeFunction(currentCluster)
         int bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
         for (int i = 0; i < bytesToRead; i++) {
             std::cout << buffer[i];
@@ -29,14 +29,23 @@ void Fat32::ReadAndDisplayFileData(int startCluster, int fileSize) {
 }
 
 int Fat32::GetNextFATCluster(int currentCluster) {
-    int nextCluster = 0;
+    int BeginOfFat = SectorsPerBootSector * BytesPerSector;
+    BeginOfFat += currentCluster * 4;
+    BYTE FAT[512];
+    readSector(this->drive, BeginOfFat, FAT, BytesPerSector);
+    int nextCluster = FAT[0] + (FAT[1] << 8) + (FAT[2] << 16) + (FAT[3] << 24);
     return nextCluster;
 }
 
-void Fat32::ReadDataCluster(int cluster, std::vector<BYTE> buffer) {
-    int readPoint = SectorsPerBootSector + (NumOfFAT * SectorsPerFAT) + (cluster - 2) * SectorsPerCluster;
-    readSector(this->drive, readPoint, buffer.data(), BytesPerSector * SectorsPerCluster);
+int Fat32::GetDataCluster(int cluster) {
+    return SectorsPerBootSector + (NumOfFAT * SectorsPerFAT) + (cluster - 2) * SectorsPerCluster;
 }
+
+void Fat32::ReadDataCluster(int cluster, std::vector<BYTE> buffer) {
+    readSector(this->drive, cluster, buffer.data(), BytesPerSector * SectorsPerCluster);
+}
+
+/////////////////// RDET / SDET
 
 std::ostream& operator << (std::ostream& out, const Entry& cur) {
     out << "Name: " << cur.name;
@@ -49,7 +58,6 @@ std::ostream& operator << (std::ostream& out, const Entry& cur) {
     return out;
 }
 
-/////////////////// RDET / SDET
 void printFileAndFolder(std::vector<Entry> vect) {
     bool isPrinted = false;
     for (int i = 0; i < vect.size(); i++) {

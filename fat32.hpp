@@ -18,6 +18,7 @@ private:
     void ReadBootSector(std::vector<BYTE> buffer);
     void ReadAndDisplayFileData(int startCluster, int fileSize);
     int GetNextFATCluster(int currentCluster);
+    int GetDataCluster(int cluster);
     void ReadDataCluster(int cluster, std::vector<BYTE> buffer);
 
 };
