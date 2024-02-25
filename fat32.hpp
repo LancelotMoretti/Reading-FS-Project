@@ -81,7 +81,7 @@ public:
     std::string getAttr() {
         return this->attr;
     }
-    
+
     friend std::ostream& operator << (std::ostream&, const Entry&);
 };
 

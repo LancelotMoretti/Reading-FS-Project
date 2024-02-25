@@ -69,7 +69,7 @@ void printFileAndFolder(std::vector<Entry> vect) {
     if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
 }
 
-std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
+std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
@@ -81,11 +81,15 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
 
     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
-    SetFilePointer(device, readPoint, NULL, FILE_BEGIN); // Start reading from readPoint
+    LONG high = readPoint >> 32;
+    LONG low = readPoint;
+
+    SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     bool isStopped = false, hasSubEntry = false;
     std::string name = "";
 
     while (!isStopped && ReadFile(device, sector, 512, &bytesRead, NULL)) {
+        printFAT32BootSector(sector);
         // Iterate through all entries of current sector
         for (int i = start; i < 512; i += 32) {
             if (sector[i] == 0xE5) continue; // Deleted entry
@@ -94,7 +98,6 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
                 break;
             }
 
-            // Read data to Entry object
             if (sector[i + 11] == 0x0F) { // Sub entry
                 std::string tempName = "";
                 for (int j = 1; j < 11; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
@@ -171,7 +174,7 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
                 cur.setDate(curDate);
 
                 // Cluster
-                cur.setCluster(sector[i + 21] * (1 << 7) * 2 + sector[i + 20] + sector[i + 27] * (1 << 7) * 2 + sector[i + 26]);
+                cur.setCluster(sector[i + 21] * (1 << 7) * (1 << 7) * (1 << 7) * 8 + sector[i + 20] * (1 << 7) * (1 << 7) * 4 + sector[i + 27] * (1 << 7) * 2 + sector[i + 26]);
 
                 // Size
                 cur.setSize((sector[i + 31] * (1 << 7) * (1 << 7) * (1 << 7) * 8) + (sector[i + 30] * (1 << 7) * (1 << 7) * 4) + (sector[i + 29] * (1 << 7) * 2) + sector[i + 28]);
@@ -180,6 +183,7 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, int readPoint, bool isRDET) {
                 name = "";
             }
         }
+        if (start != 0) start = 0;
     }
 
     CloseHandle(device);
