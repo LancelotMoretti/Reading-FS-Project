@@ -533,7 +533,7 @@ uint64_t MFTStartPoint(BYTE vbr[]) {
     return k * sc;
 }
 
-std::vector<MFTEntry> readMFT(LPCWSTR drive, long int readPoint) {
+std::vector<MFTEntry> readMFT(LPCWSTR drive, uint64_t readPoint) {
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[1024];
@@ -543,7 +543,11 @@ std::vector<MFTEntry> readMFT(LPCWSTR drive, long int readPoint) {
 
     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
-    SetFilePointer(device, readPoint, NULL, FILE_BEGIN); // Start reading from readPoint
+    LARGE_INTEGER li;
+    li.QuadPart = readPoint;
+    SetFilePointerEx(device, li, 0, FILE_BEGIN);
+
+    // SetFilePointer(device, readPoint, NULL, FILE_BEGIN); // Start reading from readPoint
     ReadFile(device, sector, 1024, &bytesRead, NULL);
 
     int MFTsize = fourBytesToInt(sector, 28);
