@@ -85,4 +85,7 @@ public:
     friend std::ostream& operator << (std::ostream&, const Entry&);
 };
 
+void printFileAndFolder(std::vector<Entry> vect);
+std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET);
+
 #endif /* FAT32_HPP_ */

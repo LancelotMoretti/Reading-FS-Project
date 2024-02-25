@@ -100,9 +100,9 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
 
             if (sector[i + 11] == 0x0F) { // Sub entry
                 std::string tempName = "";
-                for (int j = 1; j < 11; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
-                for (int j = 14; j < 26; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
-                for (int j = 28; j < 32; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
+                for (int j = 1; j < 11; j++) tempName += sector[i + j];
+                for (int j = 14; j < 26; j++) tempName += sector[i + j];
+                for (int j = 28; j < 32; j++) tempName += sector[i + j];
                 name = tempName + name;
                 hasSubEntry = true;
             } else { // Main entry

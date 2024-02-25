@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <cstdint>
 
 int readSector(LPCWSTR drive, int readPoint, BYTE* sector, int bytesPerSector);
 uint64_t rdetStartPoint(BYTE sector[]);
