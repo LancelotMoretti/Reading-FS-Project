@@ -4,16 +4,21 @@
 
 class NTFS : public Drive {
 public:
-    NTFS() = default;
-    void ReadBootSector(std::vector<BYTE>& buffer);
+    NTFS(std::vector<BYTE>& bootSector, LPCWSTR drive);
+
+    std::string GetFileSystemType();
+    void ReadFileAtPosition(uint64_t position);
+    void ReturnToStart();
+    void ReturnToParent();
 
 private:
-    LPCWSTR drive;
-    int ReservedSectors;
-    int HiddenSectors;
-    int TotalSectors;
-    int StartOfMFT;
-    int StartOfMFTMirr;
+    uint64_t ReservedSectors;
+    uint64_t HiddenSectors;
+    uint64_t TotalSectors;
+    uint64_t StartOfMFT;
+    uint64_t StartOfMFTMirr;
+
+    void ReadBootSector(std::vector<BYTE>& buffer);
 
 };
 
