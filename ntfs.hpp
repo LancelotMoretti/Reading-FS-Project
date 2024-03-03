@@ -5,8 +5,10 @@
 class NTFS : public Drive {
 public:
     NTFS() = default;
+    void ReadBootSector(std::vector<BYTE>& buffer);
 
 private:
+    LPCWSTR drive;
     int ReservedSectors;
     int HiddenSectors;
     int TotalSectors;
