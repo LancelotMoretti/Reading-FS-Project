@@ -14,19 +14,19 @@ bool readSector(LPCWSTR drive, uint64_t readPoint, BYTE* sector, uint64_t bytesP
         NULL);                  // Handle to template
 
     if (device == INVALID_HANDLE_VALUE) {   // Open Error
-        std::cout << "CreateFile: " << GetLastError() << std::endl;
+        std::wcout << "CreateFile: " << GetLastError() << std::endl;
         return false;
     }
 
     SetFilePointer(device, readPoint, NULL, FILE_BEGIN);    //Set a Point to Read
 
     if (!ReadFile(device, sector, bytesPerSector, &bytesRead, NULL)) {
-        std::cout << "ReadFile: " << GetLastError() << std::endl;
+        std::wcout << "ReadFile: " << GetLastError() << std::endl;
         CloseHandle(device);
         return false;
     }
     else {
-        std::cout << "Success!" << std::endl;
+        std::wcout << "Success!" << std::endl;
     }
     CloseHandle(device);
     return true;
@@ -36,55 +36,55 @@ void printSectorTable(BYTE sector[]) {
     printf("FAT32 PARTITION Boot Sector:\n");
     printf(" Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
     for (uint64_t i = 0; i < 512; i += 16) {
-        std::cout << std::hex << std::setfill('0') << std::setw(7) << i << "   ";
+        std::wcout << std::hex << std::setfill('0') << std::setw(7) << i << "   ";
         for (uint64_t j = 0; j < 16; j++) {
             if (i + j < 512) {
-                std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint64_t>(sector[i + j]) << " ";
+                std::wcout << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint64_t>(sector[i + j]) << " ";
             }
             else {
-                std::cout << "   ";
+                std::wcout << "   ";
             }
         }
-        std::cout << "  ";
+        std::wcout << "  ";
         for (uint64_t j = 0; j < 16; j++) {
             if (i + j < 512) {
                 BYTE c = sector[i + j];
                 if (c >= 32 && c <= 126) {
-                    std::cout << c;
+                    std::wcout << c;
                 }
                 else {
-                    std::cout << ".";
+                    std::wcout << ".";
                 }
             }
         }
-        std::cout << "\n";
+        std::wcout << "\n";
     }
 
 }
 
 void printSectorNum(BYTE sector[], int numByte) {
 
-    std::cout << "  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
+    std::wcout << "  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
     for (int i = 0; i < numByte; i += 16) {
-        std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << i << "   ";
+        std::wcout << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << i << "   ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
-                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
+                std::wcout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
             }
             else {
-                std::cout << "   ";
+                std::wcout << "   ";
             }
         }
 
-        std::cout << "  ";
+        std::wcout << "  ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
                 BYTE c = sector[i + j];
-                if (c >= 32 && c <= 126) std::cout << c; // Ascii letters
-                else std::cout << "."; // Not ascii letters
+                if (c >= 32 && c <= 126) std::wcout << c; // Ascii letters
+                else std::wcout << "."; // Not ascii letters
             }
         }
-        std::cout << std::endl;
+        std::wcout << std::endl;
     }
 }
 
@@ -121,11 +121,11 @@ void printFileAndFolder(std::vector<Entry> vect) {
     bool isPrinted = false;
     for (uint64_t i = 0; i < vect.size(); i++) {
         if (vect[i].getAttr() == "Archive" || vect[i].getAttr() == "Subdirectory") {
-            std::cout << vect[i] << std::endl;
+            std::wcout << vect[i] << std::endl;
             isPrinted = true;
         }
     }
-    if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
+    if (!isPrinted) std::wcout << "No file or folder here!" << std::endl;
 }
 
 uint64_t rdetStartPoint(BYTE bootSector[]) {
@@ -291,7 +291,7 @@ int32_t VBRStartPoint(BYTE mbr[]) {
 uint64_t MFTStartPoint(BYTE vbr[]) {
     uint64_t sc = vbr[13]; // sector / cluster
     uint64_t k = eightBytesToInt(vbr, 48); // Starting cluster
-    std::cout << k << " " << sc << std::endl;
+    std::wcout << k << " " << sc << std::endl;
     return k * sc;
 }
 
@@ -313,7 +313,7 @@ std::vector<MFTEntry> readMFT(LPCWSTR drive, uint64_t readPoint) {
     ReadFile(device, sector, 1024, &bytesRead, NULL);
 
     int MFTsize = fourBytesToInt(sector, 28);
-    std::cout << "Size = " << MFTsize << std::endl; 
+    std::wcout << "Size = " << MFTsize << std::endl; 
     printSectorTable(sector);
     
     CloseHandle(device);
@@ -346,7 +346,7 @@ std::string readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
 }
 
 bool readATTRIBUTE_LIST(BYTE sector[], uint64_t attributeListStart) {
-
+    return true;
 }
 
 bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
@@ -354,7 +354,7 @@ bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
         //resident
         int nameLength = sector[fileNameStart + 0x58];
         int nameNamespace = sector[fileNameStart + 0x59];
-        BYTE name[nameLength * 2];
+        std::vector<BYTE> name(nameLength * 2);
         for (int i = 0; i < nameLength * 2; i++) {
             name[i] = sector[fileNameStart + 0x5A + i];
         }
@@ -386,7 +386,7 @@ std::vector<MFTEntry> readNTFSTree(LPCWSTR drive, std::vector<uint64_t> listEntr
         ReadFile(device, sector, 1024, &bytesRead, NULL);
         //read $STANDARD_INFORMATION
         uint64_t stdInfoStart = nBytesToNum(sector, 0x14, 2);
-        std::cout << readSTD_INFO(sector, stdInfoStart) << std::endl;
+        std::wcout << readSTD_INFO(sector, stdInfoStart) << std::endl;
         //check if there is $ATTRIBUTE_LIST
         uint64_t stdInfoSkipOffset = fourBytesToInt(sector, stdInfoStart + 4);
         uint64_t nextAttribute = stdInfoStart + stdInfoSkipOffset;

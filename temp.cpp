@@ -181,28 +181,28 @@
 //     printf("FAT32 PARTITION Boot Sector:\n");
 //     printf(" Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
 //     for (int i = 0; i < 512; i += 16) {
-//         std::cout << std::hex << std::setfill('0') << std::setw(7) << i << "   ";
+//         std::wcout << std::hex << std::setfill('0') << std::setw(7) << i << "   ";
 //         for (int j = 0; j < 16; j++) {
 //             if (i + j < 512) {
-//                 std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
+//                 std::wcout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
 //             }
 //             else {
-//                 std::cout << "   ";
+//                 std::wcout << "   ";
 //             }
 //         }
-//         std::cout << "  ";
+//         std::wcout << "  ";
 //         for (int j = 0; j < 16; j++) {
 //             if (i + j < 512) {
 //                 BYTE c = sector[i + j];
 //                 if (c >= 32 && c <= 126) {
-//                     std::cout << c;
+//                     std::wcout << c;
 //                 }
 //                 else {
-//                     std::cout << ".";
+//                     std::wcout << ".";
 //                 }
 //             }
 //         }
-//         std::cout << "\n";
+//         std::wcout << "\n";
 //     }
 
 // }
@@ -515,11 +515,11 @@
 //     bool isPrinted = false;
 //     for (int i = 0; i < vect.size(); i++) {
 //         if (vect[i].getAttr() == "Archive" || vect[i].getAttr() == "Subdirectory") {
-//             std::cout << vect[i] << std::endl;
+//             std::wcout << vect[i] << std::endl;
 //             isPrinted = true;
 //         }
 //     }
-//     if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
+//     if (!isPrinted) std::wcout << "No file or folder here!" << std::endl;
 // }
 
 // long int VBRStartPoint(BYTE mbr[]) {
@@ -529,7 +529,7 @@
 // uint64_t MFTStartPoint(BYTE vbr[]) {
 //     uint64_t sc = vbr[13]; // sector / cluster
 //     uint64_t k = eightBytesToInt(vbr, 48); // Starting cluster
-//     std::cout << k << " " << sc << std::endl;
+//     std::wcout << k << " " << sc << std::endl;
 //     return k * sc;
 // }
 
@@ -551,7 +551,7 @@
 //     ReadFile(device, sector, 1024, &bytesRead, NULL);
 
 //     int MFTsize = fourBytesToInt(sector, 28);
-//     std::cout << "Size = " << MFTsize << std::endl; 
+//     std::wcout << "Size = " << MFTsize << std::endl; 
 //     printFAT32BootSector(sector);
     
 //     CloseHandle(device);
@@ -567,7 +567,7 @@
 //     ReadSector(L"\\\\.\\C:", 0, sector);
 //     uint64_t start = MFTStartPoint(sector) * 512;
 //     printFAT32BootSector(sector);
-//     std::cout << start << std::endl;
+//     std::wcout << start << std::endl;
 
 //     std::vector<MFTEntry> res;
 //     res = readMFT(L"\\\\.\\C:", start);
@@ -584,17 +584,17 @@
 
 //     // std::vector<Entry> res;
 //     // res = readRDETSDET(L"\\\\.\\B:", start, true);
-//     // for (int i = 0; i < res.size(); i++) std::cout << res[i] << std::endl;
+//     // for (int i = 0; i < res.size(); i++) std::wcout << res[i] << std::endl;
 
 //     // uint64_t start2 = sdetStartPoint(sector, 10) * 512;
 //     uint64_t start2 = sdetStartPoint(sector, 22) * 512;
 //     // uint64_t start2 = sdetStartPoint(sector, 157735) * 512;
-//     // std::cout << sdetStartPoint(sector, 26665) << std::endl;
+//     // std::wcout << sdetStartPoint(sector, 26665) << std::endl;
 //     // uint64_t start2 = sdetStartPoint(sector, 28871) * 512;
 //     // uint64_t start2 = sdetStartPoint(sector, 159941) * 512;
 //     std::vector<Entry> res2;
 //     res2 = readRDETSDET(L"\\\\.\\B:", start, false);
-//     // for (int i = 0; i < res2.size(); i++) std::cout << res2[i] << std::endl;
+//     // for (int i = 0; i < res2.size(); i++) std::wcout << res2[i] << std::endl;
 //     printFileAndFolder(res2);
 
 //     return 0;

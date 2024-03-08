@@ -10,6 +10,8 @@ public:
     void ReadFileAtPosition(uint64_t position);
     void ReturnToStart();
     void ReturnToParent();
+    void ViewDriveInformation();
+    void ViewFolderTree();
 
 private:
     uint64_t ReservedSectors;

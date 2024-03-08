@@ -10,6 +10,8 @@ public:
     virtual void ReadFileAtPosition(uint64_t position) = 0;
     virtual void ReturnToStart() = 0;
     virtual void ReturnToParent() = 0;
+    virtual void ViewDriveInformation() = 0;
+    virtual void ViewFolderTree() = 0;
 
     virtual ~Drive() = default;
 

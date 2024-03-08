@@ -9,15 +9,31 @@ std::string NTFS::GetFileSystemType() {
 }
 
 void NTFS::ReadFileAtPosition(uint64_t position) {
-    std::cout << "Reading file at position: " << position << std::endl;
+    std::wcout << "Reading file at position: " << position << std::endl;
 }
 
 void NTFS::ReturnToStart() {
-    std::cout << "Returning to start" << std::endl;
+    std::wcout << "Returning to start" << std::endl;
 }
 
 void NTFS::ReturnToParent() {
-    std::cout << "Returning to parent" << std::endl;
+    std::wcout << "Returning to parent" << std::endl;
+}
+
+void NTFS::ViewDriveInformation() {
+    std::wcout << "BytesPerSector: " << this->BytesPerSector << std::endl;
+    std::wcout << "SectorsPerCluster: " << this->SectorsPerCluster << std::endl;
+    std::wcout << "SectorsPerTrack: " << this->SectorsPerTrack << std::endl;
+    std::wcout << "NumOfHeads: " << this->NumOfHeads << std::endl;
+    std::wcout << "ReservedSectors: " << this->ReservedSectors << std::endl;
+    std::wcout << "HiddenSectors: " << this->HiddenSectors << std::endl;
+    std::wcout << "TotalSectors: " << this->TotalSectors << std::endl;
+    std::wcout << "StartOfMFT: " << this->StartOfMFT << std::endl;
+    std::wcout << "StartOfMFTMirr: " << this->StartOfMFTMirr << std::endl;
+}
+
+void NTFS::ViewFolderTree() {
+    std::wcout << "Viewing folder tree" << std::endl;
 }
 
 void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
@@ -25,15 +41,15 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
         return;
     }
 
-    this->ReservedSectors = bootSector[14] + (bootSector[15] << 8);
+    this->ReservedSectors = nBytesToNum(bootSector.data(), 14, 2);
     //Debugging: 
-    // std::cout << "ReservedSectors: " << this->ReservedSectors << std::endl;
-    this->HiddenSectors = bootSector[28] + (bootSector[29] << 8) + (bootSector[30] << 16) + (bootSector[31] << 24);
-    // std::cout << "HiddenSectors: " << this->HiddenSectors << std::endl;
-    this->TotalSectors = bootSector[40] + (bootSector[41] << 8) + (bootSector[42] << 16) + (bootSector[43] << 24);
-    // std::cout << "TotalSectors: " << this->TotalSectors << std::endl;
-    this->StartOfMFT = bootSector[48] + (bootSector[49] << 8) + (bootSector[50] << 16) + (bootSector[51] << 24);
-    // std::cout << "StartOfMFT: " << this->StartOfMFT << std::endl;
-    this->StartOfMFTMirr = bootSector[56] + (bootSector[57] << 8) + (bootSector[58] << 16) + (bootSector[59] << 24);
-    // std::cout << "StartOfMFTMirr: " << this->StartOfMFTMirr << std::endl;
+    // std::wcout << "ReservedSectors: " << this->ReservedSectors << std::endl;
+    this->HiddenSectors = nBytesToNum(bootSector.data(), 28, 4);
+    // std::wcout << "HiddenSectors: " << this->HiddenSectors << std::endl;
+    this->TotalSectors = nBytesToNum(bootSector.data(), 40, 4);
+    // std::wcout << "TotalSectors: " << this->TotalSectors << std::endl;
+    this->StartOfMFT = nBytesToNum(bootSector.data(), 48, 4);
+    // std::wcout << "StartOfMFT: " << this->StartOfMFT << std::endl;
+    this->StartOfMFTMirr = nBytesToNum(bootSector.data(), 56, 4);
+    // std::wcout << "StartOfMFTMirr: " << this->StartOfMFTMirr << std::endl;
 }

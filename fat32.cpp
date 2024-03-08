@@ -11,7 +11,7 @@ Fat32::Fat32(std::vector<BYTE>& bootSector, LPCWSTR drive) : Drive(drive){
 
 void Fat32::ReadFileAtPosition(uint64_t position) {
     if (position >= this->Entries.back().size()) {
-        std::cout << "Invalid position!" << std::endl;
+        std::wcout << "Invalid position!" << std::endl;
         return;
     }
     if (this->Entries.back()[position].getAttr() == "Archive") {
@@ -34,6 +34,23 @@ void Fat32::ReturnToParent() {
     printFileAndFolder(this->Entries.back());
 }
 
+void Fat32::ViewDriveInformation() {
+    std::wcout << "BytesPerSector: " << this->BytesPerSector << std::endl;
+    std::wcout << "SectorsPerCluster: " << this->SectorsPerCluster << std::endl;
+    std::wcout << "SectorsPerTrack: " << this->SectorsPerTrack << std::endl;
+    std::wcout << "NumOfHeads: " << this->NumOfHeads << std::endl;
+    std::wcout << "SectorsPerBootSector: " << this->SectorsPerBootSector << std::endl;
+    std::wcout << "NumOfFAT: " << this->NumOfFAT << std::endl;
+    std::wcout << "SizeOfVolume: " << this->SizeOfVolume << std::endl;
+    std::wcout << "SectorsPerFAT: " << this->SectorsPerFAT << std::endl;
+    std::wcout << "StartOfRDET: " << this->StartOfRDET << std::endl;
+    std::wcout << "SizeOfRDET: " << this->SizeOfRDET << std::endl;
+}
+
+void Fat32::ViewFolderTree() {
+    printFileAndFolder(this->Entries.back());
+}
+
 void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
     this->SectorsPerBootSector = bootSector[11] + (bootSector[12] << 8);
     this->NumOfFAT = bootSector[16];
@@ -52,7 +69,7 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
         this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer); // SomeFunction(currentCluster)
         uint64_t bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
         for (uint64_t i = 0; i < bytesToRead; i++) {
-            std::cout << buffer[i];
+            std::wcout << buffer[i];
         }
         remainingBytes -= bytesToRead;
         currentCluster = this->GetNextFATCluster(currentCluster);

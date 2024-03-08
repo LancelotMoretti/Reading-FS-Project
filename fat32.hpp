@@ -11,6 +11,8 @@ public:
     void ReadFileAtPosition(uint64_t position);
     void ReturnToStart();
     void ReturnToParent();
+    void ViewDriveInformation();
+    void ViewFolderTree();
 
     ~Fat32() = default;
 
@@ -33,7 +35,6 @@ private:
     uint64_t GetNextFATCluster(uint64_t currentCluster);
     uint64_t GetDataCluster(uint64_t cluster);
     void ReadDataCluster(uint64_t cluster, std::vector<BYTE> buffer);
-
 };
 
 #endif /* FAT32_HPP_ */
