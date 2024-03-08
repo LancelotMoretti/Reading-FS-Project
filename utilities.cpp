@@ -62,6 +62,32 @@ void printSectorTable(BYTE sector[]) {
 
 }
 
+void printSectorNum(BYTE sector[], int numByte) {
+
+    std::cout << "  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
+    for (int i = 0; i < numByte; i += 16) {
+        std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << i << "   ";
+        for (int j = 0; j < 16; j++) {
+            if (i + j < numByte) {
+                std::cout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
+            }
+            else {
+                std::cout << "   ";
+            }
+        }
+
+        std::cout << "  ";
+        for (int j = 0; j < 16; j++) {
+            if (i + j < numByte) {
+                BYTE c = sector[i + j];
+                if (c >= 32 && c <= 126) std::cout << c; // Ascii letters
+                else std::cout << "."; // Not ascii letters
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
 std::wstring byteToWString(std::vector<BYTE> input) {
     std::wstring wide(reinterpret_cast<wchar_t*>(input.data()), input.size() / 2);
     return wide;
@@ -250,6 +276,14 @@ uint64_t eightBytesToInt(BYTE entry[], uint64_t start) { // Little endian
     return temp + (entry[start + 3] * (1 << 8) * (1 << 8) * (1 << 8)) + (entry[start + 2] * (1 << 8) * (1 << 8)) + (entry[start + 1] * (1 << 8)) + entry[start];
 }
 
+uint64_t nBytesToNum(BYTE entry[], uint64_t start, int numBytes) {
+    uint64_t result = 0;
+    for (uint64_t i = 0; i < numBytes; i++) {
+        result += entry[start + i] * (uint64_t)pow(2, 8 * i);
+    }
+    return result;
+}
+
 int32_t VBRStartPoint(BYTE mbr[]) {
     return fourBytesToInt(mbr, 38);
 }
@@ -281,6 +315,90 @@ std::vector<MFTEntry> readMFT(LPCWSTR drive, uint64_t readPoint) {
     int MFTsize = fourBytesToInt(sector, 28);
     std::cout << "Size = " << MFTsize << std::endl; 
     printSectorTable(sector);
+    
+    CloseHandle(device);
+    return result;
+}
+
+std::map<int, std::string> flagToMeaningMapping = {
+    {0x0001, "Read Only"},
+    {0x0002, "Hidden"},
+    {0x0004, "System"},
+    {0x0020, "Archive"},
+    {0x0040, "Device"},
+    {0x0080, "Normal"},
+    {0x0100, "Temporary"},
+    {0x0200, "Sparse File"},
+    {0x0400, "Reparse Point"},
+    {0x0800, "Compressed"},
+    {0x1000, "Offline"},
+    {0x2000, "Not Content Indexed"},
+    {0x4000, "Encrypted"},
+    {0x10000000, "Directory"},
+    {0x20000000, "Index View"},
+    {0x40000000, "Virtual"}
+};
+
+std::string readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
+    uint64_t STD_INFO_ContentStart = nBytesToNum(sector, stdInfoStart + 0x14, 2);
+    uint64_t STD_INFO_Flag = fourBytesToInt(sector, STD_INFO_ContentStart + 0x20);
+    return flagToMeaningMapping[STD_INFO_Flag];
+}
+
+bool readATTRIBUTE_LIST(BYTE sector[], uint64_t attributeListStart) {
+
+}
+
+bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
+    if (sector[fileNameStart + 8] == 0) {
+        //resident
+        int nameLength = sector[fileNameStart + 0x58];
+        int nameNamespace = sector[fileNameStart + 0x59];
+        BYTE name[nameLength * 2];
+        for (int i = 0; i < nameLength * 2; i++) {
+            name[i] = sector[fileNameStart + 0x5A + i];
+        }
+        //read the name based on nameSpace, like
+        //std::string readFileName(BYTE name[]);
+        return true;
+    }
+    else {
+        //non-resident
+        //I'll find a way to solve this later, for it's rare to encounter this
+        return false;
+    }
+}
+
+std::vector<MFTEntry> readNTFSTree(LPCWSTR drive, std::vector<uint64_t> listEntries) {
+    DWORD bytesRead;
+    HANDLE device = NULL;
+    BYTE sector[1024];
+    device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+
+    std::vector<MFTEntry> result;
+    result.clear();
+
+    for (int i = 0; i < listEntries.size(); i++) {
+        uint64_t readPoint = listEntries[i];
+        LONG high = readPoint >> 32;
+        LONG low = readPoint;
+        SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
+        ReadFile(device, sector, 1024, &bytesRead, NULL);
+        //read $STANDARD_INFORMATION
+        uint64_t stdInfoStart = nBytesToNum(sector, 0x14, 2);
+        std::cout << readSTD_INFO(sector, stdInfoStart) << std::endl;
+        //check if there is $ATTRIBUTE_LIST
+        uint64_t stdInfoSkipOffset = fourBytesToInt(sector, stdInfoStart + 4);
+        uint64_t nextAttribute = stdInfoStart + stdInfoSkipOffset;
+        if (fourBytesToInt(sector, nextAttribute) == 48) {
+            //$FILE_NAME exists
+
+        }
+        else {
+            //parse $ATTRIBUTE_LIST to find $FILE_NAME
+            
+        }
+    }
     
     CloseHandle(device);
     return result;
