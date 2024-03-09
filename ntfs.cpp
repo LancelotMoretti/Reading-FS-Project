@@ -52,4 +52,10 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
     // std::wcout << "StartOfMFT: " << this->StartOfMFT << std::endl;
     this->StartOfMFTMirr = nBytesToNum(bootSector.data(), 56, 4);
     // std::wcout << "StartOfMFTMirr: " << this->StartOfMFTMirr << std::endl;
+
+    this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
+    this->SectorsPerCluster = bootSector[0x0D];
+    this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
+    this->NumOfHeads = nBytesToNum(bootSector.data(), 0x1A, 2);
+
 }
