@@ -36,10 +36,10 @@ void printSectorTable(BYTE sector[]) {
     printf("FAT32 PARTITION Boot Sector:\n");
     printf(" Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
     for (uint64_t i = 0; i < 512; i += 16) {
-        std::wcout << std::hex << std::setfill('0') << std::setw(7) << i << "   ";
+        std::wcout << std::hex << std::setfill(L'0') << std::setw(7) << i << "   ";
         for (uint64_t j = 0; j < 16; j++) {
             if (i + j < 512) {
-                std::wcout << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint64_t>(sector[i + j]) << " ";
+                std::wcout << std::hex << std::setfill(L'0') << std::setw(2) << static_cast<uint64_t>(sector[i + j]) << " ";
             }
             else {
                 std::wcout << "   ";

@@ -14,7 +14,7 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
         std::wcout << "Invalid position!" << std::endl;
         return;
     }
-    if (this->Entries.back()[position].getAttr() == "Archive") {
+    if (this->Entries.back()[position].getAttr() == L"Archive") {
         this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());
     }
     else {
