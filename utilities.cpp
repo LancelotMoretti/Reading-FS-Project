@@ -64,24 +64,24 @@ void printSectorTable(BYTE sector[]) {
 
 void printSectorNum(BYTE sector[], int numByte) {
 
-    std::wcout << "  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
+    std::wcout << L"  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
     for (int i = 0; i < numByte; i += 16) {
-        std::wcout << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << i << "   ";
+        std::wcout << std::hex << std::uppercase << std::setfill(L'0') << std::setw(8) << i << L"   ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
-                std::wcout << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << static_cast<int>(sector[i + j]) << " ";
+                std::wcout << std::hex << std::uppercase << std::setfill(L'0') << std::setw(2) << static_cast<int>(sector[i + j]) << L" ";
             }
             else {
-                std::wcout << "   ";
+                std::wcout << L"   ";
             }
         }
 
-        std::wcout << "  ";
+        std::wcout << L"  ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
-                BYTE c = sector[i + j];
-                if (c >= 32 && c <= 126) std::wcout << c; // Ascii letters
-                else std::wcout << "."; // Not ascii letters
+                unsigned char c = sector[i + j];
+                if (c >= 32 && c <= 126) std::cout << std::dec << c; // Ascii letters ??????????????
+                else std::wcout << L"."; // Not ascii letters
             }
         }
         std::wcout << std::endl;
@@ -91,6 +91,14 @@ void printSectorNum(BYTE sector[], int numByte) {
 std::wstring byteToWString(std::vector<BYTE> input) {
     std::wstring wide(reinterpret_cast<wchar_t*>(input.data()), input.size() / 2);
     return wide;
+}
+
+std::string fourBytesToString(BYTE entry[], int start) { // Little endian
+    std::string result = "";
+    for (int i = 0; i < 4; i++) {
+        result += entry[start + i];
+    }
+    return result;
 }
 
 std::string wcharToUtf8(const std::wstring& unicode) {
@@ -119,13 +127,14 @@ std::string wcharToUtf8(const std::wstring& unicode) {
 
 void printFileAndFolder(std::vector<Entry> vect) {
     bool isPrinted = false;
-    for (uint64_t i = 0; i < vect.size(); i++) {
-        if (vect[i].getAttr() == "Archive" || vect[i].getAttr() == "Subdirectory") {
+    int size = static_cast<int>(vect.size());
+    for (int i = 0; i < size; i++) {
+        if (vect[i].getAttr() == L"Archive" || vect[i].getAttr() == L"Subdirectory") {
             std::wcout << vect[i] << std::endl;
             isPrinted = true;
         }
     }
-    if (!isPrinted) std::wcout << "No file or folder here!" << std::endl;
+    if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
 }
 
 uint64_t rdetStartPoint(BYTE bootSector[]) {
@@ -146,7 +155,7 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
 }
 
 std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) {
-    uint64_t start = isRDET ? 0 : 64; // True: RDET, False: SDET
+    int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -162,12 +171,10 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
 
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     bool isStopped = false, hasSubEntry = false;
-    std::string name = "";
+    std::wstring name = L"";
 
     while (!isStopped && ReadFile(device, sector, 512, &bytesRead, NULL)) {
-        printSectorTable(sector);
-        // Iterate through all entries of current sector
-        for (uint64_t i = start; i < 512; i += 32) {
+        for (int i = start; i < 512; i += 32) {
             if (sector[i] == 0xE5) continue; // Deleted entry
             if (sector[i] == 0x00) { // End of RDET table
                 isStopped = true;
@@ -175,10 +182,10 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
             }
 
             if (sector[i + 11] == 0x0F) { // Sub entry
-                std::string tempName = "";
-                for (uint64_t j = 1; j < 11; j++) tempName += sector[i + j];
-                for (uint64_t j = 14; j < 26; j++) tempName += sector[i + j];
-                for (uint64_t j = 28; j < 32; j++) tempName += sector[i + j];
+                std::wstring tempName = L"";
+                for (int j = 1; j < 11; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
+                for (int j = 14; j < 26; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
+                for (int j = 28; j < 32; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
                 name = tempName + name;
                 hasSubEntry = true;
             } else { // Main entry
@@ -190,63 +197,63 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
                     cur.setName(name);
                     hasSubEntry = false;
                 } else {
-                    for (uint64_t j = 0; j < 8; j++) name += sector[i + j];
+                    for (int j = 0; j < 8; j++) name += sector[i + j];
                     cur.setName(name); // name
                 }
                 cur.FormatName();
 
                 // Set extension
-                std::string ext = "";
-                for (uint64_t j = 0; j < 3; j++) ext += (sector[i + 8 + j]);
-                if (sector[i + 11] == 0x10) cur.setExt(""); // Folder
+                std::wstring ext = L"";
+                for (int j = 0; j < 3; j++) ext += (sector[i + 8 + j]);
+                if (sector[i + 11] == 0x10) cur.setExt(L""); // Folder
                 else cur.setExt(ext); // Others
 
                 // Attribute
                 switch (sector[i + 11]) {
                     case 0x01: {
-                        cur.setAttr("Read Only");
+                        cur.setAttr(L"Read Only");
                         break;
                     }
                     case 0x02: {
-                        cur.setAttr("Hidden");
+                        cur.setAttr(L"Hidden");
                         break;
                     }
                     case 0x04: {
-                        cur.setAttr("System");
+                        cur.setAttr(L"System");
                         break;
                     }
                     case 0x08: {
-                        cur.setAttr("Volume Label");
+                        cur.setAttr(L"Volume Label");
                         break;
                     }
                     case 0x10: {
-                        cur.setAttr("Subdirectory");
+                        cur.setAttr(L"Subdirectory");
                         break;
                     }
                     case 0x20: {
-                        cur.setAttr("Archive");
+                        cur.setAttr(L"Archive");
                         break;
                     }
                     case 0x40: {
-                        cur.setAttr("Device");
+                        cur.setAttr(L"Device");
                         break;
                     }
                     case 0x80: {
-                        cur.setAttr("Unused");
+                        cur.setAttr(L"Unused");
                         break;
                     }
                 }
 
                 // Time
-                std::string curTime = std::to_string(sector[i + 23] >> 3) + ":"; // Hour
-                curTime += std::to_string((sector[i + 23] % (1 << 3)) * (1 << 3) + ((sector[i + 22] >> 5))) + ":"; // Minute
-                curTime += std::to_string(sector[i + 22] % (1 << 5) * 2); // Second
+                std::wstring curTime = std::to_wstring(sector[i + 23] >> 3) + L":"; // Hour
+                curTime += std::to_wstring((sector[i + 23] % (1 << 3)) * (1 << 3) + ((sector[i + 22] >> 5))) + L":"; // Minute
+                curTime += std::to_wstring(sector[i + 22] % (1 << 5) * 2); // Second
                 cur.setTime(curTime);
 
                 // Date
-                std::string curDate = std::to_string(sector[i + 24] % (1 << 5)) + "/"; // Day
-                curDate += std::to_string((sector[i + 25] % 2) * (1 << 3) + ((sector[i + 24] >> 5))) + "/"; // Month
-                curDate += std::to_string((sector[i + 25] >> 1) + 1980); // Year
+                std::wstring curDate = std::to_wstring(sector[i + 24] % (1 << 5)) + L"/"; // Day
+                curDate += std::to_wstring((sector[i + 25] % 2) * (1 << 3) + ((sector[i + 24] >> 5))) + L"/"; // Month
+                curDate += std::to_wstring((sector[i + 25] >> 1) + 1980); // Year
                 cur.setDate(curDate);
 
                 // Cluster
@@ -256,7 +263,7 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
                 cur.setSize((sector[i + 31] * (1 << 7) * (1 << 7) * (1 << 7) * 8) + (sector[i + 30] * (1 << 7) * (1 << 7) * 4) + (sector[i + 29] * (1 << 7) * 2) + sector[i + 28]);
 
                 result.push_back(cur);
-                name = "";
+                name = L"";
             }
         }
         if (start != 0) start = 0;
@@ -266,82 +273,232 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
     return result;
 }
 
-int32_t fourBytesToInt(BYTE entry[], uint64_t start) { // Little endian
-    return (entry[start + 3] * (1 << 8) * (1 << 8) * (1 << 8)) + (entry[start + 2] * (1 << 8) * (1 << 8)) + (entry[start + 1] * (1 << 8)) + entry[start];
-}
-
-uint64_t eightBytesToInt(BYTE entry[], uint64_t start) { // Little endian
-    uint64_t temp = (entry[start + 7] * (1 << 8) * (1 << 8) * (1 << 8)) + (entry[start + 6] * (1 << 8) * (1 << 8)) + (entry[start + 5] * (1 << 8)) + entry[start + 4];
-    temp *= pow(2, 32);
-    return temp + (entry[start + 3] * (1 << 8) * (1 << 8) * (1 << 8)) + (entry[start + 2] * (1 << 8) * (1 << 8)) + (entry[start + 1] * (1 << 8)) + entry[start];
-}
-
 uint64_t nBytesToNum(BYTE entry[], uint64_t start, int numBytes) {
     uint64_t result = 0;
-    for (uint64_t i = 0; i < numBytes; i++) {
-        result += entry[start + i] * (uint64_t)pow(2, 8 * i);
-    }
+    for (uint64_t i = 0; i < numBytes; i++) result += entry[start + i] * (uint64_t)pow(2, 8 * i);
     return result;
 }
 
-int32_t VBRStartPoint(BYTE mbr[]) {
-    return fourBytesToInt(mbr, 38);
+uint64_t VBRStartPoint(BYTE mbr[]) {
+    return nBytesToNum(mbr, 38, 4);
 }
 
 uint64_t MFTStartPoint(BYTE vbr[]) {
     uint64_t sc = vbr[13]; // sector / cluster
-    uint64_t k = eightBytesToInt(vbr, 48); // Starting cluster
-    std::wcout << k << " " << sc << std::endl;
+    uint64_t k = nBytesToNum(vbr, 48, 8); // Starting cluster
     return k * sc;
 }
 
-std::vector<MFTEntry> readMFT(LPCWSTR drive, uint64_t readPoint) {
+std::vector<uint64_t> readFolder(LPCWSTR drive, uint64_t readPoint) { 
+    // This funtion returns list of entries of all files and folders in a directory
+
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[1024];
-
-    std::vector<MFTEntry> result;
-    result.clear();
-
     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
-    LARGE_INTEGER li;
-    li.QuadPart = readPoint;
-    SetFilePointerEx(device, li, 0, FILE_BEGIN);
+    std::vector<uint64_t> result;
+    result.clear();
 
-    // SetFilePointer(device, readPoint, NULL, FILE_BEGIN); // Start reading from readPoint
+    LONG high = readPoint >> 32;
+    LONG low = readPoint;
+    SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint  
     ReadFile(device, sector, 1024, &bytesRead, NULL);
+    printSectorNum(sector, 1024);
 
-    int MFTsize = fourBytesToInt(sector, 28);
-    std::wcout << "Size = " << MFTsize << std::endl; 
-    printSectorTable(sector);
+    // Get first attribute's position
+    uint64_t offAttr = nBytesToNum(sector, 0x14, 2);
+    // Find $INDEX_ROOT entry
+    while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(144)) { // Check 4 first bytes to get attr's ID
+        uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
+        if (size == 0) {
+            CloseHandle(device);
+            return result;
+        }
+        offAttr += size;
+    }
+    if (offAttr >= 1024) { // No $INDEX_ROOT
+        CloseHandle(device);
+        return result;
+    }
+    uint64_t offRoot = offAttr;
+
+    // Find $INDEX_ALLOCATION entry
+    uint64_t offAllo;
+    while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(160)) { // Check 4 first bytes to get attr's ID
+        uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
+        if (size == 0) {
+            offAllo = 0xFFFFFFFFFFFFFFFF;
+            break;
+        }
+        offAttr += size;
+    }
+    offAllo = offAttr >= 1024 ? 0xFFFFFFFFFFFFFFFF : offAttr; // Check if $INDEX_ALLOCATION exists or not
+
+    // Find $BITMAP entry
+    uint64_t offBitm;
+    while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(176)) { // Check 4 first bytes to get attr's ID
+        uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
+        if (size == 0) {
+            offBitm = 0xFFFFFFFFFFFFFFFF;
+            break;
+        }
+        offAttr += size;
+    }
+    offBitm = offAttr >= 1024 ? 0xFFFFFFFFFFFFFFFF : offAttr;
+
+    // Read $BITMAP
+    std::vector<uint64_t> isUsedVCN;
+    if (offBitm != 0xFFFFFFFFFFFFFFFF) {
+        uint64_t bitmSize = nBytesToNum(sector, offBitm + uint64_t(4), 4);
+        for (uint64_t i = 0; i < bitmSize; i++) {
+            BYTE cur = sector[offBitm + uint64_t(32) + i];
+            for (int j = 0; j < 8; j++) {
+                bool isUp = cur & (1 << j);
+                uint64_t num = static_cast<uint64_t>(i) * 8 + static_cast<uint64_t>(j);
+                if (isUp) isUsedVCN.push_back(num); // Push current VCN if it is occupied
+            }
+        }
+    }
+
+    // Read $INDEX_ROOT
+    uint64_t offContent = nBytesToNum(sector, offRoot + 20, 2); // Offset to the content of this attribute
+    uint64_t offEntryRoot = nBytesToNum(sector, offRoot + offContent + uint64_t(16), 4) + offRoot + offContent + uint64_t(16);
+    uint64_t endEntryRoot = nBytesToNum(sector, offRoot + offContent + uint64_t(20), 4) + offRoot + offContent + uint64_t(16);
+    std::vector<uint64_t> listVCN;
+    while (offEntryRoot <= endEntryRoot) {
+        uint64_t curFile = nBytesToNum(sector, offEntryRoot, 6);
+
+        uint64_t fileLen = nBytesToNum(sector, offEntryRoot + uint64_t(8), 2);
+        if (fileLen == 0) break;
+
+        uint64_t flag = nBytesToNum(sector, offEntryRoot + uint64_t(12), 4);
+        if (flag != uint64_t(2) && flag != uint64_t(3)) result.push_back(curFile);
+
+        uint64_t num = nBytesToNum(sector, offEntryRoot + fileLen - uint64_t(8), 8);
+        if (flag == uint64_t(1) || flag == uint64_t(3)) {
+            if (offBitm != 0xFFFFFFFFFFFFFFFF) {
+                for (int i = 0; i < isUsedVCN.size(); i++) {
+                    if (num == isUsedVCN[i]) {
+                        listVCN.push_back(num); // Last 8 bytes 
+                        isUsedVCN[i] = isUsedVCN[isUsedVCN.size() - 1];
+                        isUsedVCN.pop_back();
+                        break;
+                    }
+                }
+            } else listVCN.push_back(num);
+        } else if (flag == uint64_t(2) || flag == uint64_t(3)) break;
+        offEntryRoot += fileLen; // Next index entry
+    }
+
+    // Read $INDEX_ALLOCATE
+    if (offAllo != 0xFFFFFFFFFFFFFFFF) {
+        uint64_t offRunlist = nBytesToNum(sector, offAllo + uint64_t(32), 2) + offAllo;
+        uint64_t endAllo = nBytesToNum(sector, offAllo + uint64_t(4), 4) + offAllo;
+        std::vector<std::pair<uint64_t, int>> listClusters;
+
+        // Get list of offsets of all runlists
+        while (offRunlist <= endAllo) {
+            if (sector[offRunlist] == 0) break;
+
+            int curByte = static_cast<int>(sector[offRunlist]);
+            int runLen = curByte % 16;
+            int offField = curByte / 16;
+            uint64_t curCls = nBytesToNum(sector, offRunlist + static_cast<uint64_t>(runLen) + uint64_t(1), static_cast<uint64_t>(offField));
+            int numCls = static_cast<uint64_t>(nBytesToNum(sector, offRunlist + uint64_t(1), static_cast<uint64_t>(runLen)));
+            listClusters.push_back(std::make_pair(uint64_t(curCls), numCls));
+            offRunlist += static_cast<uint64_t>(runLen) + static_cast<uint64_t>(offField) + uint64_t(1);
+        }
+
+        // Read VCN to get all files
+        for(int i = 0; i < listClusters.size(); i++) {
+            uint64_t curRun = listClusters[i].first * 8 * 512;
+            high = curRun >> 32;
+            low = curRun;
+            SetFilePointer(device, low, &high, FILE_BEGIN);
+
+            // Go through each cluster
+            for (int j = 0; j < listClusters[i].second; j++) {
+                BYTE clsCurrent[4096];
+                ReadFile(device, clsCurrent, 4096, &bytesRead, NULL);
+                printSectorNum(clsCurrent, 4096);
+
+                    
+                // Each cluster is referenced to a VCN, which means an Index record
+                uint64_t curVCN = nBytesToNum(clsCurrent, uint64_t(16), 8);
+                for (int k = 0; k < listVCN.size(); k++) {
+                    if (curVCN == listVCN[k]) { // Check VCN
+                        listVCN[k] = listVCN[listVCN.size() - 1];
+                        listVCN.pop_back();
+
+                        // Read Index record
+                        uint64_t offEntryAllo = nBytesToNum(clsCurrent, uint64_t(24), 4) + uint64_t(24);
+                        uint64_t endEntryAllo = nBytesToNum(clsCurrent, uint64_t(28), 4) + uint64_t(24);
+
+                        // Read all entries of an Index record
+                        // std::vector<uint64_t> listVCN;
+                        while (offEntryAllo <= endEntryAllo) {
+                            uint64_t curFile = nBytesToNum(clsCurrent, offEntryAllo, 6);
+
+                            // Get file's length
+                            uint64_t fileLen = nBytesToNum(clsCurrent, offEntryAllo + uint64_t(8), 2);
+                            if (fileLen == 0) break;
+                            std::wcout << std::hex << offEntryAllo << " " << fileLen << std::endl;
+
+                            // Get flag state
+                            uint64_t flag = nBytesToNum(clsCurrent, offEntryAllo + uint64_t(12), 4);
+                            if (flag != uint64_t(2) && flag != uint64_t(3)) result.push_back(curFile);
+
+
+                            if (flag == uint64_t(1) || flag == uint64_t(3)) {
+                                uint64_t num = nBytesToNum(clsCurrent, offEntryAllo + fileLen - uint64_t(8), 8);
+                                if (offBitm != 0xFFFFFFFFFFFFFFFF) {
+                                    for (int l = 0; l < isUsedVCN.size(); l++) {
+                                        if (num == isUsedVCN[l]) {
+                                            listVCN.push_back(num); // Last 8 bytes 
+                                            isUsedVCN[l] = isUsedVCN[isUsedVCN.size() - 1];
+                                            isUsedVCN.pop_back();
+                                            break;
+                                        }
+                                    }
+                                } else listVCN.push_back(num);
+                            } else if (flag == uint64_t(2) || flag == uint64_t(3)) break;
+
+                            offEntryAllo += fileLen; // Next index entry
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
     
     CloseHandle(device);
     return result;
 }
 
-std::map<int, std::string> flagToMeaningMapping = {
-    {0x0001, "Read Only"},
-    {0x0002, "Hidden"},
-    {0x0004, "System"},
-    {0x0020, "Archive"},
-    {0x0040, "Device"},
-    {0x0080, "Normal"},
-    {0x0100, "Temporary"},
-    {0x0200, "Sparse File"},
-    {0x0400, "Reparse Point"},
-    {0x0800, "Compressed"},
-    {0x1000, "Offline"},
-    {0x2000, "Not Content Indexed"},
-    {0x4000, "Encrypted"},
-    {0x10000000, "Directory"},
-    {0x20000000, "Index View"},
-    {0x40000000, "Virtual"}
+std::map<int, std::wstring> flagToMeaningMapping = {
+    {0x0001, L"Read Only"},
+    {0x0002, L"Hidden"},
+    {0x0004, L"System"},
+    {0x0020, L"Archive"},
+    {0x0040, L"Device"},
+    {0x0080, L"Normal"},
+    {0x0100, L"Temporary"},
+    {0x0200, L"Sparse File"},
+    {0x0400, L"Reparse Point"},
+    {0x0800, L"Compressed"},
+    {0x1000, L"Offline"},
+    {0x2000, L"Not Content Indexed"},
+    {0x4000, L"Encrypted"},
+    {0x10000000, L"Directory"},
+    {0x20000000, L"Index View"},
+    {0x40000000, L"Virtual"}
 };
 
-std::string readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
+std::wstring readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
     uint64_t STD_INFO_ContentStart = nBytesToNum(sector, stdInfoStart + 0x14, 2);
-    uint64_t STD_INFO_Flag = fourBytesToInt(sector, STD_INFO_ContentStart + 0x20);
+    uint64_t STD_INFO_Flag = nBytesToNum(sector, STD_INFO_ContentStart + 0x20, 4);
     return flagToMeaningMapping[STD_INFO_Flag];
 }
 
@@ -388,9 +545,9 @@ std::vector<MFTEntry> readNTFSTree(LPCWSTR drive, std::vector<uint64_t> listEntr
         uint64_t stdInfoStart = nBytesToNum(sector, 0x14, 2);
         std::wcout << readSTD_INFO(sector, stdInfoStart) << std::endl;
         //check if there is $ATTRIBUTE_LIST
-        uint64_t stdInfoSkipOffset = fourBytesToInt(sector, stdInfoStart + 4);
+        uint64_t stdInfoSkipOffset = nBytesToNum(sector, stdInfoStart + 4, 4);
         uint64_t nextAttribute = stdInfoStart + stdInfoSkipOffset;
-        if (fourBytesToInt(sector, nextAttribute) == 48) {
+        if (nBytesToNum(sector, nextAttribute, 4) == 48) {
             //$FILE_NAME exists
 
         }

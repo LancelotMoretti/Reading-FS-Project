@@ -2,23 +2,23 @@
 
 ///////////////////////////////////////////////////////// Fat32 Entry /////////////////////////////////////////////////////////
 
-void Entry::setName(std::string name) {
+void Entry::setName(std::wstring name) {
     this->name = name;
 }
 
-void Entry::setExt(std::string ext) {
+void Entry::setExt(std::wstring ext) {
     this->ext = ext;
 }
 
-void Entry::setAttr(std::string attr) {
+void Entry::setAttr(std::wstring attr) {
     this->attr = attr;
 }
 
-void Entry::setTime(std::string time) {
+void Entry::setTime(std::wstring time) {
     this->time = time;
 }
 
-void Entry::setDate(std::string date) {
+void Entry::setDate(std::wstring date) {
     this->date = date;
 }
 
@@ -34,7 +34,7 @@ void Entry::setByte(BYTE sector[], uint64_t pos) {
     for (uint64_t i = 0; i < 32; i++) inByte[i] = sector[pos + i];
 }
 
-std::string Entry::getAttr() {
+std::wstring Entry::getAttr() {
     return this->attr;
 }
 
@@ -47,51 +47,50 @@ uint64_t Entry::getSize() {
 }
 
 void Entry::FormatName() {
-    uint64_t len = this->name.length(), index = 0;
-    char* temp = new char [len + 1];
-    for (char c : this->name) temp[index++] = c;
+    int len = this->name.length(), index = 0;
+    wchar_t* temp = new wchar_t [len + 1];
+    for (wchar_t c : this->name) temp[index++] = c;
     index--;
-    while (index > -1 && this->name[index] == ' ') index--;
-    temp[index + 1] = '\0';
+    while (index > -1 && this->name[index] == L' ') index--;
+    temp[index + 1] = L'\0';
     this->name = temp;
     delete []temp;
 }
 
-std::ostream& operator << (std::ostream& out, const Entry& cur) {
-    out << "Name: " << cur.name;
-    if (cur.ext != "") out << "." << cur.ext;
-    out << std::endl;
-    out << "Attribute: " << cur.attr << std::endl;
-    out << "Last modified time: " << cur.date << ", " << cur.time << std::endl;
-    out << "Starting cluster: " << cur.cluster << std::endl;
-    out << "Size: " << cur.size << std::endl;
+std::wostream& operator << (std::wostream& out, const Entry& cur) {
+    out << L"Name: " << cur.name << std::endl;
+    if (cur.ext != L"") out << L"Extension: " << cur.ext << std::endl;
+    out << L"Type: " << cur.attr << std::endl;
+    out << L"Last modified time: " << cur.date << ", " << cur.time << std::endl;
+    out << L"Starting cluster: " << cur.cluster << std::endl;
+    out << L"Size: " << cur.size << std::endl;
     return out;
 }
 
 ///////////////////////////////////////////////////////// MFT Entry /////////////////////////////////////////////////////////
 
-void MFTEntry::setName(std::string name) {
+void MFTEntry::setName(std::wstring name) {
     this->name = name;
 }
 
-void MFTEntry::setExt(std::string ext) {
+void MFTEntry::setExt(std::wstring ext) {
     this->ext = ext;
 }
 
-void MFTEntry::setAttr(std::string attr) {
-    this->attr = attr;
+void MFTEntry::setAttr(std::wstring type) {
+    this->type = type;
 }
 
-void MFTEntry::setTime(std::string time) {
+void MFTEntry::setTime(std::wstring time) {
     this->time = time;
 }
 
-void MFTEntry::setDate(std::string date) {
+void MFTEntry::setDate(std::wstring date) {
     this->date = date;
 }
 
-void MFTEntry::setCluster(int clus) {
-    this->cluster = clus;
+void MFTEntry::setCluster(int entry) {
+    this->mftEntry = entry;
 }
 
 void MFTEntry::setSize(int size) {
@@ -100,22 +99,21 @@ void MFTEntry::setSize(int size) {
 
 void MFTEntry::FormatName() {
     int len = this->name.length(), index = 0;
-    char* temp = new char [len + 1];
-    for (char c : this->name) temp[index++] = c;
+    wchar_t* temp = new wchar_t [len + 1];
+    for (wchar_t c : this->name) temp[index++] = c;
     index--;
-    while (index > -1 && this->name[index] == ' ') index--;
-    temp[index + 1] = '\0';
+    while (index > -1 && this->name[index] == L' ') index--;
+    temp[index + 1] = L'\0';
     this->name = temp;
     delete []temp;
 }
 
-std::ostream& operator << (std::ostream& out, const MFTEntry& cur) {
-    out << "Name: " << cur.name;
-    if (cur.ext != "") out << "." << cur.ext;
-    out << std::endl;
-    out << "Attribute: " << cur.attr << std::endl;
-    out << "Last modified time: " << cur.date << ", " << cur.time << std::endl;
-    out << "Starting cluster: " << cur.cluster << std::endl;
-    out << "Size: " << cur.size << std::endl;
+std::wostream& operator << (std::wostream& out, const MFTEntry& cur) {
+    out << L"Name: " << cur.name << std::endl;
+    if (cur.ext != L"") out << L"Extension: " << cur.ext << std::endl;
+    out << L"Type: " << cur.type << std::endl;
+    out << L"Last modified time: " << cur.date << ", " << cur.time << std::endl;
+    out << L"MFT entry index: " << cur.mftEntry << std::endl;
+    out << L"Size: " << cur.size << std::endl;
     return out;
 }

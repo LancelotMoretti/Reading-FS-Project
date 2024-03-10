@@ -1,11 +1,15 @@
 #include <iostream>
-#include <Windows.h>
-#include <vector>
+#include <fstream>
 #include <string>
+#include <windows.h>
+#include <stdio.h>
+#include <vector>
 #include <iomanip>
+#include <math.h>
 #include <cstdint>
+#include <locale>
 #include <sstream>
-#include <cmath>
+#include <codecvt>
 
 #ifndef ENTRY_HPP_
 #define ENTRY_HPP_
@@ -16,11 +20,11 @@
 class Entry {
 private:
     // Entry specific
-    std::string name; // Name
-    std::string ext; // Extension
-    std::string attr; // Attribute
-    std::string time; // Last update time
-    std::string date; // Last update date
+    std::wstring name; // Name
+    std::wstring ext; // Extension
+    std::wstring attr; // Attribute
+    std::wstring time; // Last update time
+    std::wstring date; // Last update date
     uint64_t cluster; // Starting cluster
     uint64_t size; // Size
 
@@ -31,16 +35,16 @@ public:
 
     // Setters
     void setByte(BYTE sector[], uint64_t pos);
-    void setName(std::string name);
-    void setExt(std::string ext);
-    void setAttr(std::string attr);
-    void setTime(std::string time);
-    void setDate(std::string date);
+    void setName(std::wstring name);
+    void setExt(std::wstring ext);
+    void setAttr(std::wstring attr);
+    void setTime(std::wstring time);
+    void setDate(std::wstring date);
     void setCluster(uint64_t clus);
     void setSize(uint64_t size);
 
     // Getters
-    std::string getAttr();
+    std::wstring getAttr();
     uint64_t getStartCluster();
     uint64_t getSize();
 
@@ -48,7 +52,7 @@ public:
     void FormatName(); // Remove trailing spaces
 
     // Overload
-    friend std::ostream& operator<<(std::ostream&, const Entry&);
+    friend std::wostream& operator << (std::wostream&, const Entry&);
 
     ~Entry() = default;
 };
@@ -60,32 +64,32 @@ public:
 
 class MFTEntry {
 private:
-    std::string name; // Name
-    std::string ext; // Extension
-    std::string attr; // Attribute
-    std::string time; // Last update time
-    std::string date; // Last update date
-    int cluster; // Starting cluster
+    std::wstring name; // Name
+    std::wstring ext; // Extension
+    std::wstring type; // Attribute
+    std::wstring time; // Last update time
+    std::wstring date; // Last update date
+    int mftEntry; // Starting cluster
     int size; // Size
 public:
     MFTEntry() = default;
 
     // Setters
-    void setName(std::string name);
-    void setExt(std::string ext);
-    void setAttr(std::string attr);
-    void setTime(std::string time);
-    void setDate(std::string date);
+    void setName(std::wstring name);
+    void setExt(std::wstring ext);
+    void setAttr(std::wstring attr);
+    void setTime(std::wstring time);
+    void setDate(std::wstring date);
     void setCluster(int clus);
     void setSize(int size);
 
     // Getters
-    std::string getAttr();
+    std::wstring getAttr();
 
     // Methods
     void FormatName(); // Remove trailing spaces
 
-    friend std::ostream& operator<<(std::ostream&, const MFTEntry&);
+    friend std::wostream& operator<<(std::wostream&, const MFTEntry&);
 };
 
 #endif /* MFT_ENTRY_ */
