@@ -2,30 +2,30 @@
 #include "ntfs.hpp"
 
 int main(int argc, char ** argv) {
-    // Drive* Drive = nullptr;
+    // Volume* Volume = nullptr;
     // std::vector<BYTE> buffer(512);
-    // LPCWSTR drive;
+    // LPCWSTR volume;
 
     // if (argc != 2) {
-    //     std::wcout << "Usage: " << argv[0] << " <drive letter>" << std::endl;
+    //     std::wcout << "Usage: " << argv[0] << " <volume letter>" << std::endl;
     //     std::wcout << "Example: " << argv[0] << " C" << std::endl;
-    //     std::wcout << "Set to default drive C:" << std::endl;
-    //     drive = L"\\\\.\\C:";
+    //     std::wcout << "Set to default volume C:" << std::endl;
+    //     volume = L"\\\\.\\C:";
     // }
     // else {
     //     wchar_t tmp[100];
     //     wcscat(tmp, L"\\\\.\\");
     //     wcscpy(tmp, (wchar_t*)argv[1]);
     //     wcscat(tmp, L":");
-    //     drive = tmp;
+    //     volume = tmp;
     // }
 
-    // readSector(drive, 0, buffer.data(), 512);
+    // readSector(volume, 0, buffer.data(), 512);
     // if (buffer[3] == 'N' && buffer[4] == 'T' && buffer[5] == 'F' && buffer[6] == 'S') {
-    //     Drive = new NTFS(buffer, drive);
+    //     Volume = new NTFS(buffer, volume);
     // }
     // else if (buffer[82] == 'F' && buffer[83] == 'A' && buffer[84] == 'T' && buffer[85] == '3' && buffer[86] == '2') {
-    //     Drive = new Fat32(buffer, drive);
+    //     Volume = new Fat32(buffer, volume);
     // }
     // else {
     //     std::wcout << "Unknown file system" << std::endl;
@@ -47,33 +47,33 @@ int main(int argc, char ** argv) {
     //         std::wcout << "-parent - return to parent" << std::endl;
     //     }
     //     else if (command == "-start") {
-    //         Drive->ReturnToStart();
+    //         Volume->ReturnToStart();
     //     }
     //     else if (command == "-parent") {
-    //         Drive->ReturnToParent();
+    //         Volume->ReturnToParent();
     //     }
     //     else if (command == "-read") {
     //         uint64_t position;
     //         std::wcout << "Enter position: ";
     //         std::cin >> position;
-    //         Drive->ReadFileAtPosition(position);
+    //         Volume->ReadFileAtPosition(position);
     //     }
     //     else if (command == "-type") {
-    //         std::wcout << Drive->GetFileSystemType() << std::endl;
+    //         std::wcout << Volume->GetFileSystemType() << std::endl;
     //     }
     //     else {
     //         std::wcout << "Unknown command" << std::endl;
     //     }
     // }
 
-    // delete Drive;
+    // delete Volume;
     // return 0;
 
     DWORD bytesRead;
     HANDLE device = NULL;
     std::wstring rootDir = L"\\\\.\\";
     std::wstring name;
-    Drive *drive = nullptr;
+    Volume *volume = nullptr;
     std::vector<BYTE> sector(512);
 
     std::wcout << L"----------------------------------------" << std::endl;
@@ -82,7 +82,7 @@ int main(int argc, char ** argv) {
 
     while (true) {
         std::wcout << L"----------------------------------------" << std::endl;
-        std::wcout << L"-- Enter drive's name (enter 0 to exit): ";
+        std::wcout << L"-- Enter volume's name (enter 0 to exit): ";
         std::wcin >> name;
         std::wstring curDir = rootDir + name + L":";
         
@@ -102,19 +102,19 @@ int main(int argc, char ** argv) {
 
         // Partition not exist
         if (device == INVALID_HANDLE_VALUE || !ReadFile(device, sector.data(), 512, &bytesRead, NULL)) {
-            std::wcout << "-- This drive is not exist!" << std::endl;
-            std::wcout << "-- Please enter a valid drive's name!" << std::endl;
+            std::wcout << "-- This volume is not exist!" << std::endl;
+            std::wcout << "-- Please enter a valid volume's name!" << std::endl;
             continue;
         }
 
         readSector(curDir.c_str(), 0, sector.data(), 512);
         if (sector[3] == 'N' && sector[4] == 'T' && sector[5] == 'F' && sector[6] == 'S') {
             std::wcout << "-- Detected NTFS file system" << std::endl;
-            drive = new NTFS(sector, curDir.c_str());
+            volume = new NTFS(sector, curDir.c_str());
         }
         else if (sector[82] == 'F' && sector[83] == 'A' && sector[84] == 'T' && sector[85] == '3' && sector[86] == '2') {
             std::wcout << "-- Detected Fat32 file system" << std::endl;
-            drive = new Fat32(sector, curDir.c_str());
+            volume = new Fat32(sector, curDir.c_str());
         }
         else {
             std::wcout << "-- Unknown file system" << std::endl;
@@ -128,10 +128,10 @@ int main(int argc, char ** argv) {
         do {
             std::wcout << "-- Success" << std::endl;
             std::wcout << "----------------------------------------" << std::endl;
-            std::wcout << "----     WELCOME TO " << name << " DRIVE     ----" << std::endl;
+            std::wcout << "----     WELCOME TO " << name << " VOLUME     ----" << std::endl;
             std::wcout << "-- What do you want to do?" << std::endl;
-            std::wcout << "--  1. View drive's information" << std::endl;
-            std::wcout << "--  2. View drive's data" << std::endl;
+            std::wcout << "--  1. View volume's information" << std::endl;
+            std::wcout << "--  2. View volume's data" << std::endl;
             std::wcout << "--  3. Read file or folder at position" << std::endl;
             std::wcout << "--  4. Return previous directory" << std::endl;
             std::wcout << "--  5. Return root directory" << std::endl;
@@ -141,23 +141,23 @@ int main(int argc, char ** argv) {
 
             switch (choice) {
                 case 1:
-                    drive->ViewDriveInformation();
+                    volume->ViewVolumeInformation();
                     break;
                 case 2:
-                    drive->ViewFolderTree();
+                    volume->ViewFolderTree();
                     break;
                 case 3: {
                     uint64_t position;
                     std::wcout << "-- Enter position: ";
                     std::wcin >> position;
-                    drive->ReadFileAtPosition(position);
+                    volume->ReadFileAtPosition(position);
                     break;
                 }
                 case 4:
-                    drive->ReturnToParent();
+                    volume->ReturnToParent();
                     break;
                 case 5:
-                    drive->ReturnToStart();
+                    volume->ReturnToStart();
                     break;
                 case 6:
                     break;
@@ -167,8 +167,8 @@ int main(int argc, char ** argv) {
             }
         } while (choice != 6);
 
-        delete drive;
-        drive = nullptr;
+        delete volume;
+        volume = nullptr;
         CloseHandle(device);
     }
     return 0;

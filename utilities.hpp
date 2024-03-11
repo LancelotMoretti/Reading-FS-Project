@@ -4,8 +4,8 @@
 #ifndef UTILITIES_HPP_
 #define UTILITIES_HPP_
 
-// Read sector from drive
-bool readSector(LPCWSTR drive, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);
+// Read sector from volume
+bool readSector(LPCWSTR volume, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);
 
 // Print sector table
 void printSectorTable(BYTE sector[]);
@@ -23,7 +23,7 @@ void printFileAndFolder(std::vector<Entry> vect);
 uint64_t rdetStartPoint(BYTE sector[]);
 uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster);
 // Read RDET or SDET
-std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET);
+std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET);
 
 // Convert byte array to integer
 uint64_t nBytesToNum(BYTE entry[], uint64_t start, int numBytes);
@@ -36,7 +36,7 @@ uint64_t MFTStartPoint(BYTE vbr[]);
 std::wstring readSTD_INFO(BYTE sector[], uint64_t stdInfoStart);
 bool readATTRIBUTE_LIST(BYTE sector[], uint64_t attributeListStart);
 bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart);
-std::vector<uint64_t> readFolder(LPCWSTR drive, uint64_t readPoint);
-std::vector<MFTEntry> readNTFSTree(LPCWSTR drive, std::vector<uint64_t> listEntries);
+std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint);
+std::vector<MFTEntry> readNTFSTree(LPCWSTR volume, std::vector<uint64_t> listEntries);
 
 #endif /* UTILITIES_HPP_ */

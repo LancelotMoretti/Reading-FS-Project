@@ -1,16 +1,16 @@
 #ifndef NTFS_HPP_
 #define NTFS_HPP_
-#include "drive.hpp"
+#include "volume.hpp"
 
-class NTFS : public Drive {
+class NTFS : public Volume {
 public:
-    NTFS(std::vector<BYTE>& bootSector, LPCWSTR drive);
+    NTFS(std::vector<BYTE>& bootSector, LPCWSTR volume);
 
     std::string GetFileSystemType();
     void ReadFileAtPosition(uint64_t position);
     void ReturnToStart();
     void ReturnToParent();
-    void ViewDriveInformation();
+    void ViewVolumeInformation();
     void ViewFolderTree();
 
 private:

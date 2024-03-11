@@ -8,9 +8,9 @@
 // #include <math.h>
 // #include <cstdint>
 
-// class Drive {
+// class Volume {
 // public:
-//     Drive() = default;
+//     Volume() = default;
 
 // protected:
 //     int BytesPerSector;
@@ -21,12 +21,12 @@
 //     int NextReadingOffset;
 // };
 
-// class Fat32 : public Drive {
+// class Fat32 : public Volume {
 // public:
 //     Fat32() = default;
 
 // private:
-//     LPCWSTR drive;
+//     LPCWSTR volume;
 //     int SectorsPerBootSector;
 //     int NumOfFAT;
 //     int SizeOfVolume;
@@ -35,7 +35,7 @@
 //     int SizeOfRDET;
 // };
 
-// class NTFS : public Drive {
+// class NTFS : public Volume {
 // public:
 //     NTFS() = default;
 
@@ -207,12 +207,12 @@
 
 // }
 
-// int ReadSector(LPCWSTR  drive, int readPoint, BYTE sector[512])
+// int ReadSector(LPCWSTR  volume, int readPoint, BYTE sector[512])
 // {
 //     DWORD bytesRead;
 //     HANDLE device = NULL;
 
-//     device = CreateFileW(drive,    // Drive to open
+//     device = CreateFileW(volume,    // Volume to open
 //         GENERIC_READ,           // Access mode
 //         FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
 //         NULL,                   // Security Descriptor
@@ -276,7 +276,7 @@
 //     return sb + sf * nf + (cluster - 2) * sc;
 // }
 
-// std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) {
+// std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET) {
 //     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
 //     DWORD bytesRead;
@@ -286,7 +286,7 @@
 //     std::vector<Entry> result;
 //     result.clear();
 
-//     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+//     device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
 //     LONG high = readPoint >> 32;
 //     LONG low = readPoint;
@@ -397,7 +397,7 @@
 //     return result;
 // }
 
-// std::vector<Entry> readSDET(LPCWSTR drive, int readPoint) {
+// std::vector<Entry> readSDET(LPCWSTR volume, int readPoint) {
 //     DWORD bytesRead;
 //     HANDLE device = NULL;
 //     BYTE sector[512];
@@ -405,7 +405,7 @@
 //     std::vector<Entry> result;
 //     result.clear();
 
-//     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+//     device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
 //     SetFilePointer(device, readPoint, NULL, FILE_BEGIN); // Start reading from readPoint
 //     bool isStopped = false, hasSubEntry = false;
@@ -533,7 +533,7 @@
 //     return k * sc;
 // }
 
-// std::vector<MFTEntry> readMFT(LPCWSTR drive, uint64_t readPoint) {
+// std::vector<MFTEntry> readMFT(LPCWSTR volume, uint64_t readPoint) {
 //     DWORD bytesRead;
 //     HANDLE device = NULL;
 //     BYTE sector[1024];
@@ -541,7 +541,7 @@
 //     std::vector<MFTEntry> result;
 //     result.clear();
 
-//     device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+//     device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
 //     LARGE_INTEGER li;
 //     li.QuadPart = readPoint;

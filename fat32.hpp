@@ -1,17 +1,17 @@
 #ifndef FAT32_HPP_
 #define FAT32_HPP_
-#include "drive.hpp"
+#include "volume.hpp"
 
-class Fat32 : public Drive {
+class Fat32 : public Volume {
 public:
-    Fat32(std::vector<BYTE>& bootSector, LPCWSTR drive);
+    Fat32(std::vector<BYTE>& bootSector, LPCWSTR volume);
 
     // Inherited methods
     std::string GetFileSystemType();
     void ReadFileAtPosition(uint64_t position);
     void ReturnToStart();
     void ReturnToParent();
-    void ViewDriveInformation();
+    void ViewVolumeInformation();
     void ViewFolderTree();
 
     ~Fat32() = default;

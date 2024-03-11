@@ -1,11 +1,11 @@
 #include "utilities.hpp"
 
-bool readSector(LPCWSTR drive, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector) {
+bool readSector(LPCWSTR volume, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector) {
     uint64_t retCode = 0;
     DWORD bytesRead;
     HANDLE device = NULL;
 
-    device = CreateFileW(drive,    // Drive to open
+    device = CreateFileW(volume,    // Volume to open
         GENERIC_READ,           // Access mode
         FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
         NULL,                   // Security Descriptor
@@ -155,7 +155,7 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
     return sb + sf * nf + (cluster - 2) * sc;
 }
 
-std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) {
+std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
@@ -166,7 +166,7 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
     result.clear();
 
     device = CreateFileW(
-        drive,
+        volume,
         GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         NULL,
@@ -301,13 +301,13 @@ uint64_t MFTStartPoint(BYTE vbr[]) {
     return k * sc;
 }
 
-std::vector<uint64_t> readFolder(LPCWSTR drive, uint64_t readPoint) { 
+std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) { 
     // This funtion returns list of entries of all files and folders in a directory
 
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[1024];
-    device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
     std::vector<uint64_t> result;
     result.clear();
@@ -538,11 +538,11 @@ bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
     }
 }
 
-std::vector<MFTEntry> readNTFSTree(LPCWSTR drive, std::vector<uint64_t> listEntries) {
+std::vector<MFTEntry> readNTFSTree(LPCWSTR volume, std::vector<uint64_t> listEntries) {
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[1024];
-    device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
     std::vector<MFTEntry> result;
     result.clear();

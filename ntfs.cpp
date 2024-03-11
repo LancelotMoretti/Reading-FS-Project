@@ -1,6 +1,6 @@
 #include "ntfs.hpp"
 
-NTFS::NTFS(std::vector<BYTE>& bootSector, LPCWSTR drive) : Drive(drive) {
+NTFS::NTFS(std::vector<BYTE>& bootSector, LPCWSTR volume) : Volume(volume) {
     ReadBootSector(bootSector);
 }
 
@@ -20,7 +20,7 @@ void NTFS::ReturnToParent() {
     std::wcout << "Returning to parent" << std::endl;
 }
 
-void NTFS::ViewDriveInformation() {
+void NTFS::ViewVolumeInformation() {
     std::wcout << "BytesPerSector: " << this->BytesPerSector << std::endl;
     std::wcout << "SectorsPerCluster: " << this->SectorsPerCluster << std::endl;
     std::wcout << "SectorsPerTrack: " << this->SectorsPerTrack << std::endl;
