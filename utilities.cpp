@@ -220,7 +220,6 @@ std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET)
                 else cur.setExt(ext); // Others
 
                 // Attribute
-                std::wcout << std::hex << sector[i + 11] << std::endl;
                 switch (sector[i + 11]) {
                     case 0x01: {
                         cur.setAttr(L"Read Only");
@@ -253,6 +252,11 @@ std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET)
                     case 0x80: {
                         cur.setAttr(L"Unused");
                         break;
+                    }
+                    default: {
+                        if ((sector[i + 11] & 0x04) == 0x04) cur.setAttr(L"System");
+                        else if ((sector[i + 11] & 0x10) == 0x10) cur.setAttr(L"Subdirectory");
+                        else cur.setAttr(L"Unknown");
                     }
                 }
 

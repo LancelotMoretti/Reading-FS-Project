@@ -10,9 +10,9 @@ Fat32::Fat32(std::vector<BYTE>& bootSector, LPCWSTR volume) : Volume(volume){
     if (this->Entries.back().size() == 0) {
         std::wcout << "No entries found!" << std::endl;
     }
-    else {
-        printFileAndFolder(this->Entries.back());
-    }
+    // else {
+    //     printFileAndFolder(this->Entries.back());
+    // }
 }
 
 void Fat32::ReadFileAtPosition(uint64_t position) {
@@ -29,7 +29,6 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
         }
     }
     else {
-        std::wcout << this->Entries.back()[position].getAttr() << std::endl;
         this->Entries.push_back(readRDETSDET(this->VolumeName, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
     }
 }
@@ -38,12 +37,12 @@ void Fat32::ReturnToStart() {
     while (this->Entries.size() > 1) {
         this->Entries.pop_back();
     }
-    printFileAndFolder(this->Entries.back());
+    // printFileAndFolder(this->Entries.back());
 }
 
 void Fat32::ReturnToParent() {
     this->Entries.pop_back();
-    printFileAndFolder(this->Entries.back());
+    // printFileAndFolder(this->Entries.back());
 }
 
 void Fat32::ViewVolumeInformation() {
