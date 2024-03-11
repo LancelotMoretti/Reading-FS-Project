@@ -47,6 +47,7 @@ public:
     std::wstring getAttr();
     uint64_t getStartCluster();
     uint64_t getSize();
+    std::wstring getExt();
 
     // Methods
     void FormatName(); // Remove trailing spaces

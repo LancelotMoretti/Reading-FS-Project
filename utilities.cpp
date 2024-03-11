@@ -25,9 +25,9 @@ bool readSector(LPCWSTR drive, uint64_t readPoint, BYTE* sector, uint64_t bytesP
         CloseHandle(device);
         return false;
     }
-    else {
-        std::wcout << "Success!" << std::endl;
-    }
+    // else {
+    //     printSectorTable(sector);
+    // }
     CloseHandle(device);
     return true;
 }
@@ -50,7 +50,7 @@ void printSectorTable(BYTE sector[]) {
             if (i + j < 512) {
                 BYTE c = sector[i + j];
                 if (c >= 32 && c <= 126) {
-                    std::wcout << c;
+                    std::wcout << wchar_t(c);
                 }
                 else {
                     std::wcout << ".";
@@ -130,6 +130,7 @@ void printFileAndFolder(std::vector<Entry> vect) {
     int size = static_cast<int>(vect.size());
     for (int i = 0; i < size; i++) {
         if (vect[i].getAttr() == L"Archive" || vect[i].getAttr() == L"Subdirectory") {
+            std::wcout << "Position: " << std::dec << i << std::endl;
             std::wcout << vect[i] << std::endl;
             isPrinted = true;
         }
@@ -164,16 +165,26 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
     std::vector<Entry> result;
     result.clear();
 
-    device = CreateFileW(drive, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    device = CreateFileW(
+        drive,
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        NULL
+    );
 
     LONG high = readPoint >> 32;
     LONG low = readPoint;
+    // std::wcout << "ReadPoint: " << std::dec << high << " " << low << std::endl;
 
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     bool isStopped = false, hasSubEntry = false;
     std::wstring name = L"";
 
     while (!isStopped && ReadFile(device, sector, 512, &bytesRead, NULL)) {
+        // printSectorTable(sector);
         for (int i = start; i < 512; i += 32) {
             if (sector[i] == 0xE5) continue; // Deleted entry
             if (sector[i] == 0x00) { // End of RDET table
@@ -209,6 +220,7 @@ std::vector<Entry> readRDETSDET(LPCWSTR drive, uint64_t readPoint, bool isRDET) 
                 else cur.setExt(ext); // Others
 
                 // Attribute
+                std::wcout << std::hex << sector[i + 11] << std::endl;
                 switch (sector[i + 11]) {
                     case 0x01: {
                         cur.setAttr(L"Read Only");

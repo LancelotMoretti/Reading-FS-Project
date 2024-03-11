@@ -23,7 +23,6 @@ private:
     uint64_t SizeOfVolume;
     uint64_t SectorsPerFAT;
     uint64_t StartOfRDET;
-    uint64_t SizeOfRDET;
     
     // List of entries
     // Last vector is the entries of current directory
@@ -34,7 +33,7 @@ private:
     void ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize);
     uint64_t GetNextFATCluster(uint64_t currentCluster);
     uint64_t GetDataCluster(uint64_t cluster);
-    void ReadDataCluster(uint64_t cluster, std::vector<BYTE> buffer);
+    void ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer);
 };
 
 #endif /* FAT32_HPP_ */

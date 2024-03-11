@@ -46,6 +46,10 @@ uint64_t Entry::getSize() {
     return this->size;
 }
 
+std::wstring Entry::getExt() {
+    return this->ext;
+}
+
 void Entry::FormatName() {
     int len = this->name.length(), index = 0;
     wchar_t* temp = new wchar_t [len + 1];

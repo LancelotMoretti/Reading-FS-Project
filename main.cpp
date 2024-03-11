@@ -96,7 +96,7 @@ int main(int argc, char ** argv) {
             FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL,
             OPEN_EXISTING,
-            0,
+            FILE_FLAG_BACKUP_SEMANTICS,
             NULL
         );
 
@@ -109,9 +109,11 @@ int main(int argc, char ** argv) {
 
         readSector(curDir.c_str(), 0, sector.data(), 512);
         if (sector[3] == 'N' && sector[4] == 'T' && sector[5] == 'F' && sector[6] == 'S') {
+            std::wcout << "-- Detected NTFS file system" << std::endl;
             drive = new NTFS(sector, curDir.c_str());
         }
         else if (sector[82] == 'F' && sector[83] == 'A' && sector[84] == 'T' && sector[85] == '3' && sector[86] == '2') {
+            std::wcout << "-- Detected Fat32 file system" << std::endl;
             drive = new Fat32(sector, curDir.c_str());
         }
         else {
@@ -126,11 +128,14 @@ int main(int argc, char ** argv) {
         do {
             std::wcout << "-- Success" << std::endl;
             std::wcout << "----------------------------------------" << std::endl;
-            std::wcout << "----     WELCOME TO " << name << " PARTITION     ----" << std::endl;
+            std::wcout << "----     WELCOME TO " << name << " DRIVE     ----" << std::endl;
             std::wcout << "-- What do you want to do?" << std::endl;
             std::wcout << "--  1. View drive's information" << std::endl;
             std::wcout << "--  2. View drive's data" << std::endl;
-            std::wcout << "--  3. Exit" << std::endl;
+            std::wcout << "--  3. Read file or folder at position" << std::endl;
+            std::wcout << "--  4. Return previous directory" << std::endl;
+            std::wcout << "--  5. Return root directory" << std::endl;
+            std::wcout << "--  6. Exit" << std::endl;
             std::wcout << "-- >> Enter your choice: ";
             std::wcin >> choice;
 
@@ -139,15 +144,34 @@ int main(int argc, char ** argv) {
                     drive->ViewDriveInformation();
                     break;
                 case 2:
+                    drive->ViewFolderTree();
                     break;
-                    // *
-                case 3:
+                case 3: {
+                    uint64_t position;
+                    std::wcout << "-- Enter position: ";
+                    std::wcin >> position;
+                    drive->ReadFileAtPosition(position);
+                    break;
+                }
+                case 4:
+                    drive->ReturnToParent();
+                    break;
+                case 5:
+                    drive->ReturnToStart();
+                    break;
+                case 6:
+                    break;
+                default:
+                    std::wcout << "-- Invalid choice!" << std::endl;
                     break;
             }
-        } while (choice != 3);
+        } while (choice != 6);
 
+        delete drive;
+        drive = nullptr;
         CloseHandle(device);
     }
+    return 0;
 
     // BYTE sector[512];
     // readSector(L"\\\\.\\F:", 0, sector, 512);

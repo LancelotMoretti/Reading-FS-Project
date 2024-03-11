@@ -7,6 +7,12 @@
 Fat32::Fat32(std::vector<BYTE>& bootSector, LPCWSTR drive) : Drive(drive){
     this->ReadBootSector(bootSector);
     this->Entries.push_back(readRDETSDET(this->DriveName, this->StartOfRDET, true));
+    if (this->Entries.back().size() == 0) {
+        std::wcout << "No entries found!" << std::endl;
+    }
+    else {
+        printFileAndFolder(this->Entries.back());
+    }
 }
 
 void Fat32::ReadFileAtPosition(uint64_t position) {
@@ -15,10 +21,16 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
         return;
     }
     if (this->Entries.back()[position].getAttr() == L"Archive") {
-        this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());
+        if (this->Entries.back()[position].getExt() == L"TXT") {
+            this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());
+        }
+        else {
+            std::wcout << "File type not supported!" << std::endl;
+        }
     }
     else {
-        this->Entries.push_back(readRDETSDET(this->DriveName, this->Entries.back()[position].getStartCluster(), false));
+        std::wcout << this->Entries.back()[position].getAttr() << std::endl;
+        this->Entries.push_back(readRDETSDET(this->DriveName, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
     }
 }
 
@@ -35,16 +47,15 @@ void Fat32::ReturnToParent() {
 }
 
 void Fat32::ViewDriveInformation() {
-    std::wcout << "BytesPerSector: " << this->BytesPerSector << std::endl;
-    std::wcout << "SectorsPerCluster: " << this->SectorsPerCluster << std::endl;
-    std::wcout << "SectorsPerTrack: " << this->SectorsPerTrack << std::endl;
-    std::wcout << "NumOfHeads: " << this->NumOfHeads << std::endl;
-    std::wcout << "SectorsPerBootSector: " << this->SectorsPerBootSector << std::endl;
-    std::wcout << "NumOfFAT: " << this->NumOfFAT << std::endl;
-    std::wcout << "SizeOfVolume: " << this->SizeOfVolume << std::endl;
-    std::wcout << "SectorsPerFAT: " << this->SectorsPerFAT << std::endl;
-    std::wcout << "StartOfRDET: " << this->StartOfRDET << std::endl;
-    std::wcout << "SizeOfRDET: " << this->SizeOfRDET << std::endl;
+    std::wcout << "BytesPerSector: " << std::dec << this->BytesPerSector << std::endl;
+    std::wcout << "SectorsPerCluster: " << std::dec << this->SectorsPerCluster << std::endl;
+    std::wcout << "SectorsPerTrack: " << std::dec << this->SectorsPerTrack << std::endl;
+    std::wcout << "NumOfHeads: " << std::dec << this->NumOfHeads << std::endl;
+    std::wcout << "SectorsPerBootSector: " << std::dec << this->SectorsPerBootSector << std::endl;
+    std::wcout << "NumOfFAT: " << std::dec << this->NumOfFAT << std::endl;
+    std::wcout << "SizeOfVolume: " << std::dec << this->SizeOfVolume << std::endl;
+    std::wcout << "SectorsPerFAT: " << std::dec << this->SectorsPerFAT << std::endl;
+    std::wcout << "StartOfRDET: " << std::dec << this->StartOfRDET << std::endl;
 }
 
 void Fat32::ViewFolderTree() {
@@ -52,17 +63,17 @@ void Fat32::ViewFolderTree() {
 }
 
 void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
-    this->SectorsPerBootSector = bootSector[11] + (bootSector[12] << 8);
-    this->NumOfFAT = bootSector[16];
-    this->SizeOfVolume = bootSector[32] + (bootSector[33] << 8) + (bootSector[34] << 16) + (bootSector[35] << 24);
-    this->SectorsPerFAT = bootSector[22] + (bootSector[23] << 8);
-    this->StartOfRDET = this->SectorsPerBootSector + (this->NumOfFAT * this->SectorsPerFAT);
-    this->SizeOfRDET = (this->SizeOfVolume * 32) / 512;
-
-    this->BytesPerSector = bootSector[0x0B] + (bootSector[0x0C] << 8);
+    this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
     this->SectorsPerCluster = bootSector[0x0D];
-    this->SectorsPerTrack = bootSector[0x18] + (bootSector[0x19] << 8);
-    this->NumOfHeads = bootSector[0x1A] + (bootSector[0x1B] << 8);
+    this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
+    this->NumOfHeads = nBytesToNum(bootSector.data(), 0x1A, 2);
+
+    this->SectorsPerBootSector = nBytesToNum(bootSector.data(), 0x0E, 2);
+    this->NumOfFAT = bootSector[0x10];
+    this->SizeOfVolume = nBytesToNum(bootSector.data(), 0x20, 4);
+    this->SectorsPerFAT = nBytesToNum(bootSector.data(), 0x24, 4);
+
+    this->StartOfRDET = rdetStartPoint(bootSector.data()) * this->BytesPerSector;
 }
 
 void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
@@ -70,11 +81,14 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
     buffer.resize(BytesPerSector * SectorsPerCluster);
     uint64_t currentCluster = startCluster;
     uint64_t remainingBytes = fileSize;
-    while (remainingBytes > 0 && currentCluster < 0x0FFFFFF8) {
-        this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer); // SomeFunction(currentCluster)
+    int count = 0;
+    while (remainingBytes > 0 && currentCluster <= 0x0FFFFFEF) {
+        std::wcout << "Loop " << count++ << " " << std::dec << remainingBytes << " " << std::hex << currentCluster << std::endl;
+
+        this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer);
         uint64_t bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
         for (uint64_t i = 0; i < bytesToRead; i++) {
-            std::wcout << buffer[i];
+            std::wcout << wchar_t(buffer[i]);
         }
         remainingBytes -= bytesToRead;
         currentCluster = this->GetNextFATCluster(currentCluster);
@@ -82,11 +96,17 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
 }
 
 uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
-    uint64_t BeginOfFat = SectorsPerBootSector * BytesPerSector;
-    BeginOfFat += currentCluster * 4;
+    uint64_t BeginOfFat = this->SectorsPerBootSector;
+    while (currentCluster > this->BytesPerSector / 4) {
+        currentCluster -= this->BytesPerSector / 4;
+        BeginOfFat += this->BytesPerSector;
+    }
+    std::wcout << L"Sectors per BootSector: " << std::dec << SectorsPerBootSector << std::endl;
+    std::wcout << L"Current cluster: " << std::dec << currentCluster << std::endl;
+    std::wcout << L"Begin of Fat: " << std::dec << BeginOfFat << std::endl;
     BYTE FAT[512];
-    readSector(this->DriveName, BeginOfFat, FAT, BytesPerSector);
-    uint64_t nextCluster = FAT[0] + (FAT[1] << 8) + (FAT[2] << 16) + (FAT[3] << 24);
+    readSector(this->DriveName, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
+    uint64_t nextCluster = nBytesToNum(FAT, currentCluster * 4, 4);
     return nextCluster;
 }
 
@@ -94,8 +114,8 @@ uint64_t Fat32::GetDataCluster(uint64_t cluster) {
     return SectorsPerBootSector + (NumOfFAT * SectorsPerFAT) + (cluster - 2) * SectorsPerCluster;
 }
 
-void Fat32::ReadDataCluster(uint64_t cluster, std::vector<BYTE> buffer) {
-    readSector(this->DriveName, cluster, buffer.data(), BytesPerSector * SectorsPerCluster);
+void Fat32::ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer) {
+    readSector(this->DriveName, cluster * this->BytesPerSector, buffer.data(), this->BytesPerSector * this->SectorsPerCluster);
 }
 
 std::string Fat32::GetFileSystemType() {
