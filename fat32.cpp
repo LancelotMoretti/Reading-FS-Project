@@ -83,8 +83,6 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
     uint64_t remainingBytes = fileSize;
     int count = 0;
     while (remainingBytes > 0 && currentCluster <= 0x0FFFFFEF) {
-        std::wcout << "Loop " << count++ << " " << std::dec << remainingBytes << " " << std::hex << currentCluster << std::endl;
-
         this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer);
         uint64_t bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
         for (uint64_t i = 0; i < bytesToRead; i++) {
@@ -101,9 +99,7 @@ uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
         currentCluster -= this->BytesPerSector / 4;
         BeginOfFat += this->BytesPerSector;
     }
-    std::wcout << L"Sectors per BootSector: " << std::dec << SectorsPerBootSector << std::endl;
-    std::wcout << L"Current cluster: " << std::dec << currentCluster << std::endl;
-    std::wcout << L"Begin of Fat: " << std::dec << BeginOfFat << std::endl;
+
     BYTE FAT[512];
     readSector(this->VolumeName, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
     uint64_t nextCluster = nBytesToNum(FAT, currentCluster * 4, 4);
