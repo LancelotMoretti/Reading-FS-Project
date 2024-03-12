@@ -33,7 +33,7 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
     }
 }
 
-void Fat32::ReturnToStart() {
+void Fat32::ReturnToRoot() {
     while (this->Entries.size() > 1) {
         this->Entries.pop_back();
     }

@@ -47,7 +47,7 @@ int main(int argc, char ** argv) {
     //         std::wcout << "-parent - return to parent" << std::endl;
     //     }
     //     else if (command == "-start") {
-    //         Volume->ReturnToStart();
+    //         Volume->ReturnToRoot();
     //     }
     //     else if (command == "-parent") {
     //         Volume->ReturnToParent();
@@ -68,6 +68,9 @@ int main(int argc, char ** argv) {
 
     // delete Volume;
     // return 0;
+
+    _setmode(_fileno(stdout), _O_U16TEXT);
+    _setmode(_fileno(stdin), _O_U16TEXT);
 
     DWORD bytesRead;
     HANDLE device = NULL;
@@ -157,7 +160,7 @@ int main(int argc, char ** argv) {
                     volume->ReturnToParent();
                     break;
                 case 5:
-                    volume->ReturnToStart();
+                    volume->ReturnToRoot();
                     break;
                 case 6:
                     break;

@@ -311,7 +311,15 @@ std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) {
     DWORD bytesRead;
     HANDLE device = NULL;
     BYTE sector[1024];
-    device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    device = CreateFileW(
+        volume,
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        NULL
+    );
 
     std::vector<uint64_t> result;
     result.clear();
@@ -438,7 +446,6 @@ std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) {
                 BYTE clsCurrent[4096];
                 ReadFile(device, clsCurrent, 4096, &bytesRead, NULL);
                 printSectorNum(clsCurrent, 4096);
-
                     
                 // Each cluster is referenced to a VCN, which means an Index record
                 uint64_t curVCN = nBytesToNum(clsCurrent, uint64_t(16), 8);

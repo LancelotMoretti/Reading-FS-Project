@@ -2,14 +2,16 @@
 #include <fstream>
 #include <string>
 #include <windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iomanip>
-#include <math.h>
+#include <cmath>
 #include <cstdint>
 #include <locale>
 #include <sstream>
 #include <codecvt>
+#include <io.h>
+#include <fcntl.h>
 
 #ifndef ENTRY_HPP_
 #define ENTRY_HPP_

@@ -8,7 +8,7 @@ public:
 
     std::string GetFileSystemType();
     void ReadFileAtPosition(uint64_t position);
-    void ReturnToStart();
+    void ReturnToRoot();
     void ReturnToParent();
     void ViewVolumeInformation();
     void ViewFolderTree();
@@ -19,6 +19,8 @@ private:
     uint64_t TotalSectors;
     uint64_t StartOfMFT;
     uint64_t StartOfMFTMirr;
+
+    std::vector<MFTEntry> MFTEntries;
 
     void ReadBootSector(std::vector<BYTE>& buffer);
 

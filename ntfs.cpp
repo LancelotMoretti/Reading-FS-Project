@@ -12,7 +12,7 @@ void NTFS::ReadFileAtPosition(uint64_t position) {
     std::wcout << "Reading file at position: " << position << std::endl;
 }
 
-void NTFS::ReturnToStart() {
+void NTFS::ReturnToRoot() {
     std::wcout << "Returning to start" << std::endl;
 }
 

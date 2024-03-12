@@ -8,7 +8,7 @@ public:
     
     virtual std::string GetFileSystemType() = 0;
     virtual void ReadFileAtPosition(uint64_t position) = 0;
-    virtual void ReturnToStart() = 0;
+    virtual void ReturnToRoot() = 0;
     virtual void ReturnToParent() = 0;
     virtual void ViewVolumeInformation() = 0;
     virtual void ViewFolderTree() = 0;
