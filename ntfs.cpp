@@ -1,6 +1,6 @@
 #include "ntfs.hpp"
 
-NTFS::NTFS(std::vector<BYTE>& bootSector, LPCWSTR volume) : Volume(volume) {
+NTFS::NTFS(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volumeHandle) {
     ReadBootSector(bootSector);
 }
 
@@ -83,7 +83,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
 
     std::vector<BYTE> buffer(1024);
 
-    readSector(this->VolumeName, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
+    readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
 
     do {
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
@@ -113,7 +113,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                     attributeOffset += dataStart;
 
                     for (int i = 0; i < dataSize; i++) {
-                        readSector(this->VolumeName,
+                        readSector(this->VolumeHandle,
                             (dataStart + i) * this->SectorsPerCluster * this->BytesPerSector,
                             content.data(),
                             this->BytesPerSector * this->SectorsPerCluster

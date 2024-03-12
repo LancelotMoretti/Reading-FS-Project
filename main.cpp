@@ -110,14 +110,14 @@ int main(int argc, char ** argv) {
             continue;
         }
 
-        readSector(curDir.c_str(), 0, sector.data(), 512);
+        readSector(device, 0, sector.data(), 512);
         if (sector[3] == 'N' && sector[4] == 'T' && sector[5] == 'F' && sector[6] == 'S') {
             std::wcout << "-- Detected NTFS file system" << std::endl;
-            volume = new NTFS(sector, curDir.c_str());
+            volume = new NTFS(sector, device);
         }
         else if (sector[82] == 'F' && sector[83] == 'A' && sector[84] == 'T' && sector[85] == '3' && sector[86] == '2') {
             std::wcout << "-- Detected Fat32 file system" << std::endl;
-            volume = new Fat32(sector, curDir.c_str());
+            volume = new Fat32(sector, device);
         }
         else {
             std::wcout << "-- Unknown file system" << std::endl;

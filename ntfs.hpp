@@ -4,7 +4,7 @@
 
 class NTFS : public Volume {
 public:
-    NTFS(std::vector<BYTE>& bootSector, LPCWSTR volume);
+    NTFS(std::vector<BYTE>& bootSector, HANDLE volumeHandle);
 
     std::string GetFileSystemType();
     void ReadFileAtPosition(uint64_t position);

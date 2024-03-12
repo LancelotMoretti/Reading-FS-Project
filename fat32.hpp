@@ -4,7 +4,7 @@
 
 class Fat32 : public Volume {
 public:
-    Fat32(std::vector<BYTE>& bootSector, LPCWSTR volume);
+    Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle);
 
     // Inherited methods
     std::string GetFileSystemType();

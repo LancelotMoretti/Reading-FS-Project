@@ -4,9 +4,9 @@
 
 ///////////////////////////////////////////////////////// CLass Fat32 //////////////////////////////////////////////////////////
 
-Fat32::Fat32(std::vector<BYTE>& bootSector, LPCWSTR volume) : Volume(volume){
+Fat32::Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volumeHandle){
     this->ReadBootSector(bootSector);
-    this->Entries.push_back(readRDETSDET(this->VolumeName, this->StartOfRDET, true));
+    this->Entries.push_back(readRDETSDET(this->VolumeHandle, this->StartOfRDET, true));
     if (this->Entries.back().size() == 0) {
         std::wcout << "No entries found!" << std::endl;
     }
@@ -30,7 +30,7 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
         }
     }
     else {
-        this->Entries.push_back(readRDETSDET(this->VolumeName, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
+        this->Entries.push_back(readRDETSDET(this->VolumeHandle, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
     }
 }
 
@@ -102,7 +102,7 @@ uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
     }
 
     BYTE FAT[512];
-    readSector(this->VolumeName, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
+    readSector(this->VolumeHandle, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
     uint64_t nextCluster = nBytesToNum(FAT, currentCluster * 4, 4);
     return nextCluster;
 }
@@ -112,7 +112,7 @@ uint64_t Fat32::GetDataCluster(uint64_t cluster) {
 }
 
 void Fat32::ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer) {
-    readSector(this->VolumeName, cluster * this->BytesPerSector, buffer.data(), this->BytesPerSector * this->SectorsPerCluster);
+    readSector(this->VolumeHandle, cluster * this->BytesPerSector, buffer.data(), this->BytesPerSector * this->SectorsPerCluster);
 }
 
 std::string Fat32::GetFileSystemType() {

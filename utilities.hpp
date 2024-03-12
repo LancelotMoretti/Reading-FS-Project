@@ -5,7 +5,7 @@
 #define UTILITIES_HPP_
 
 // Read sector from volume
-bool readSector(LPCWSTR volume, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);
+bool readSector(HANDLE devive, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);
 
 // Print sector table
 void printSectorTable(BYTE sector[]);
@@ -23,7 +23,7 @@ void printFileAndFolder(std::vector<Entry> vect);
 uint64_t rdetStartPoint(BYTE sector[]);
 uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster);
 // Read RDET or SDET
-std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET);
+std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET);
 
 // Convert byte array to integer
 uint64_t nBytesToNum(BYTE entry[], uint64_t start, int numBytes);

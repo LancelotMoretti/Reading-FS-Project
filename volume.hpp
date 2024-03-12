@@ -4,7 +4,7 @@
 
 class Volume {
 public:
-    Volume(LPCWSTR volume) : VolumeName(volume) {}
+    Volume(HANDLE volumeHandle) : VolumeHandle(volumeHandle) {}
     
     virtual std::string GetFileSystemType() = 0;
     virtual void ReadFileAtPosition(uint64_t position) = 0;
@@ -16,7 +16,7 @@ public:
     virtual ~Volume() = default;
 
 protected:
-    LPCWSTR VolumeName;
+    HANDLE VolumeHandle;
     int BytesPerSector;
     int SectorsPerCluster;
     int SectorsPerTrack;

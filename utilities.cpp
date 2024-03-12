@@ -1,17 +1,17 @@
 #include "utilities.hpp"
 
-bool readSector(LPCWSTR volume, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector) {
+bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector) {
     uint64_t retCode = 0;
     DWORD bytesRead;
-    HANDLE device = NULL;
+    // HANDLE device = NULL;
 
-    device = CreateFileW(volume,    // Volume to open
-        GENERIC_READ,           // Access mode
-        FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
-        NULL,                   // Security Descriptor
-        OPEN_EXISTING,          // How to create
-        FILE_FLAG_BACKUP_SEMANTICS,                      // File attributes
-        NULL);                  // Handle to template
+    // device = CreateFileW(volume,    // Volume to open
+    //     GENERIC_READ,           // Access mode
+    //     FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
+    //     NULL,                   // Security Descriptor
+    //     OPEN_EXISTING,          // How to create
+    //     FILE_FLAG_BACKUP_SEMANTICS,                      // File attributes
+    //     NULL);                  // Handle to template
 
     if (device == INVALID_HANDLE_VALUE) {   // Open Error
         std::wcout << "CreateFile: " << GetLastError() << std::endl;
@@ -155,25 +155,25 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
     return sb + sf * nf + (cluster - 2) * sc;
 }
 
-std::vector<Entry> readRDETSDET(LPCWSTR volume, uint64_t readPoint, bool isRDET) {
+std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
-    HANDLE device = NULL;
+    // HANDLE device = NULL;
     BYTE sector[512];
 
     std::vector<Entry> result;
     result.clear();
 
-    device = CreateFileW(
-        volume,
-        GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        NULL
-    );
+    // device = CreateFileW(
+    //     volume,
+    //     GENERIC_READ,
+    //     FILE_SHARE_READ | FILE_SHARE_WRITE,
+    //     NULL,
+    //     OPEN_EXISTING,
+    //     FILE_FLAG_BACKUP_SEMANTICS,
+    //     NULL
+    // );
 
     LONG high = readPoint >> 32;
     LONG low = readPoint;
