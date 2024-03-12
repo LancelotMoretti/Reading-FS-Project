@@ -22,6 +22,7 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
     }
     if (this->Entries.back()[position].getAttr() == L"Archive") {
         if (this->Entries.back()[position].getExt() == L"TXT") {
+            std::wcout << "File content: " << std::endl;
             this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());
         }
         else {
@@ -90,6 +91,7 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
         remainingBytes -= bytesToRead;
         currentCluster = this->GetNextFATCluster(currentCluster);
     }
+    std::wcout << std::endl;
 }
 
 uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {

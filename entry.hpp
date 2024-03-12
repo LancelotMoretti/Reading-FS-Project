@@ -88,6 +88,8 @@ public:
 
     // Getters
     std::wstring getAttr();
+    uint64_t getEntry();
+    std::wstring getExt();
 
     // Methods
     void FormatName(); // Remove trailing spaces

@@ -101,6 +101,18 @@ void MFTEntry::setSize(int size) {
     this->size = size;
 }
 
+std::wstring MFTEntry::getAttr() {
+    return this->type;
+}
+
+uint64_t MFTEntry::getEntry() {
+    return this->mftEntry;
+}
+
+std::wstring MFTEntry::getExt() {
+    return this->ext;
+}
+
 void MFTEntry::FormatName() {
     int len = this->name.length(), index = 0;
     wchar_t* temp = new wchar_t [len + 1];

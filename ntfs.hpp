@@ -23,6 +23,7 @@ private:
     std::vector<MFTEntry> MFTEntries;
 
     void ReadBootSector(std::vector<BYTE>& buffer);
+    void ReadAndDisplayFileData(uint64_t mftEntry);
 
 };
 
