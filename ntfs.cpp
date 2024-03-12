@@ -56,8 +56,6 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
         return;
     }
 
-    printSectorTable(bootSector.data());
-
     this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
     this->SectorsPerCluster = bootSector[0x0D];
     this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
@@ -71,10 +69,16 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
 }
 
 void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
+    // Attribute information
     uint64_t attributeCode = 0;
     uint64_t attributeSize = 0;
+
+    // Current offset in the buffer
     uint64_t attributeOffset = 0;
+
+    // Flag to check if the attribute is resident or non-resident
     bool isResident = true;
+
     uint64_t nameLength = 0;
     uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
     uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
@@ -122,6 +126,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                         );
 
                         for (int j = 0; j < content.size(); j++) {
+                            if (content[j] == 0) break;
                             std::wcout << wchar_t(content[j]);
                         }
                     }

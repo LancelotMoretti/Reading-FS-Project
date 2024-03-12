@@ -12,7 +12,7 @@ void printSectorTable(BYTE sector[]);
 void printSectorNum(BYTE sector[], int numByte);
 
 // Convert utf16 byte array to utf8 string
-std::wstring byteToWString(std::vector<BYTE> input);
+std::wstring byteToWString(std::vector<BYTE> input, int wSize);
 std::string fourBytesToString(BYTE entry[], int start);
 std::string wcharToUtf8(const std::wstring& wstr);
 

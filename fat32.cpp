@@ -10,16 +10,16 @@ Fat32::Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volume
     if (this->Entries.back().size() == 0) {
         std::wcout << "No entries found!" << std::endl;
     }
-    // else {
-    //     printFileAndFolder(this->Entries.back());
-    // }
 }
 
 void Fat32::ReadFileAtPosition(uint64_t position) {
+    // Check if position is valid
     if (position >= this->Entries.back().size()) {
         std::wcout << "Invalid position!" << std::endl;
         return;
     }
+
+    // Read file content if it is a text file else print error message
     if (this->Entries.back()[position].getAttr() == L"Archive") {
         if (this->Entries.back()[position].getExt() == L"TXT") {
             std::wcout << "File content: " << std::endl;
@@ -27,8 +27,10 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
         }
         else {
             std::wcout << "File type not supported!" << std::endl;
+            std::wcout << "Please use the reader for the file type: " << this->Entries.back()[position].getExt() << std::endl;
         }
     }
+    // Open folder if it not a file
     else {
         this->Entries.push_back(readRDETSDET(this->VolumeHandle, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
     }
@@ -38,12 +40,13 @@ void Fat32::ReturnToRoot() {
     while (this->Entries.size() > 1) {
         this->Entries.pop_back();
     }
-    // printFileAndFolder(this->Entries.back());
 }
 
 void Fat32::ReturnToParent() {
+    if (this->Entries.size() == 1) {
+        return;
+    }
     this->Entries.pop_back();
-    // printFileAndFolder(this->Entries.back());
 }
 
 void Fat32::ViewVolumeInformation() {
@@ -77,32 +80,48 @@ void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
 }
 
 void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
+    // Vector to store the data of a cluster
     std::vector<BYTE> buffer;
     buffer.resize(BytesPerSector * SectorsPerCluster);
+
+    // Current cluster (in position) and remaining bytes to read
     uint64_t currentCluster = startCluster;
     uint64_t remainingBytes = fileSize;
-    int count = 0;
+    
     while (remainingBytes > 0 && currentCluster <= 0x0FFFFFEF) {
+        // Read the data of the current cluster
         this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer);
-        uint64_t bytesToRead = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
-        for (uint64_t i = 0; i < bytesToRead; i++) {
+
+        // Number of bytes to read in the current cluster
+        uint64_t bytesReaded = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
+        
+        // Print the data
+        for (uint64_t i = 0; i < bytesReaded; i++) {
             std::wcout << wchar_t(buffer[i]);
         }
-        remainingBytes -= bytesToRead;
+
+        // Update the remaining bytes and the current cluster
+        remainingBytes -= bytesReaded;
         currentCluster = this->GetNextFATCluster(currentCluster);
     }
     std::wcout << std::endl;
 }
 
 uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
+    // Calculate the begin of the FAT
     uint64_t BeginOfFat = this->SectorsPerBootSector;
+
+    // If the current cluster is not in the first sector of the FAT
     while (currentCluster > this->BytesPerSector / 4) {
         currentCluster -= this->BytesPerSector / 4;
         BeginOfFat += this->BytesPerSector;
     }
 
+    // Read the current FAT sector
     BYTE FAT[512];
     readSector(this->VolumeHandle, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
+
+    // Get the next cluster
     uint64_t nextCluster = nBytesToNum(FAT, currentCluster * 4, 4);
     return nextCluster;
 }

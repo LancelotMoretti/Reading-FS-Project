@@ -57,8 +57,6 @@ int main() {
             continue;
         }
 
-        // uint64_t start = MFTStartPoint(sector.data()) * 512;
-
         int choice;
 
         do {
@@ -67,7 +65,7 @@ int main() {
             std::wcout << "----     WELCOME TO " << name << " VOLUME     ----" << std::endl;
             std::wcout << "-- What do you want to do?" << std::endl;
             std::wcout << "--  1. View volume's information" << std::endl;
-            std::wcout << "--  2. View volume's data" << std::endl;
+            std::wcout << "--  2. View directory list" << std::endl;
             std::wcout << "--  3. Read file or folder at position" << std::endl;
             std::wcout << "--  4. Return previous directory" << std::endl;
             std::wcout << "--  5. Return root directory" << std::endl;

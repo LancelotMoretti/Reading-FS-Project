@@ -25,9 +25,6 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
         CloseHandle(device);
         return false;
     }
-    // else {
-    //     printSectorTable(sector);
-    // }
     CloseHandle(device);
     return true;
 }
@@ -88,8 +85,8 @@ void printSectorNum(BYTE sector[], int numByte) {
     }
 }
 
-std::wstring byteToWString(std::vector<BYTE> input) {
-    std::wstring wide(reinterpret_cast<wchar_t*>(input.data()), input.size() / 2);
+std::wstring byteToWString(std::vector<BYTE> input, int wSize) {
+    std::wstring wide(reinterpret_cast<wchar_t*>(input.data()), wSize);
     return wide;
 }
 
@@ -159,32 +156,19 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
-    // HANDLE device = NULL;
     BYTE sector[512];
 
     std::vector<Entry> result;
     result.clear();
 
-    // device = CreateFileW(
-    //     volume,
-    //     GENERIC_READ,
-    //     FILE_SHARE_READ | FILE_SHARE_WRITE,
-    //     NULL,
-    //     OPEN_EXISTING,
-    //     FILE_FLAG_BACKUP_SEMANTICS,
-    //     NULL
-    // );
-
     LONG high = readPoint >> 32;
     LONG low = readPoint;
-    // std::wcout << "ReadPoint: " << std::dec << high << " " << low << std::endl;
 
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     bool isStopped = false, hasSubEntry = false;
     std::wstring name = L"";
 
     while (!isStopped && ReadFile(device, sector, 512, &bytesRead, NULL)) {
-        // printSectorTable(sector);
         for (int i = start; i < 512; i += 32) {
             if (sector[i] == 0xE5) continue; // Deleted entry
             if (sector[i] == 0x00) { // End of RDET table
@@ -194,9 +178,15 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
 
             if (sector[i + 11] == 0x0F) { // Sub entry
                 std::wstring tempName = L"";
-                for (int j = 1; j < 11; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
-                for (int j = 14; j < 26; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
-                for (int j = 28; j < 32; j++) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) tempName += sector[i + j];
+                for (int j = 1; j < 11; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
+                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
+                }
+                for (int j = 14; j < 26; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
+                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
+                }
+                for (int j = 28; j < 32; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
+                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
+                }
                 name = tempName + name;
                 hasSubEntry = true;
             } else { // Main entry
@@ -276,7 +266,7 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
                 cur.setCluster(sector[i + 21] * (1 << 7) * (1 << 7) * (1 << 7) * 8 + sector[i + 20] * (1 << 7) * (1 << 7) * 4 + sector[i + 27] * (1 << 7) * 2 + sector[i + 26]);
 
                 // Size
-                cur.setSize((sector[i + 31] * (1 << 7) * (1 << 7) * (1 << 7) * 8) + (sector[i + 30] * (1 << 7) * (1 << 7) * 4) + (sector[i + 29] * (1 << 7) * 2) + sector[i + 28]);
+                cur.setSize(nBytesToNum(sector, i + 28, 4));
 
                 result.push_back(cur);
                 name = L"";
