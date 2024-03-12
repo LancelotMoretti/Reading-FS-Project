@@ -82,9 +82,9 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     uint64_t nameLength = 0;
     uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
     uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
-    uint64_t dataRunStart = 0; //Start VCN of the data runlist
+    uint64_t dataRunStart = 0; //Start VCN of the data runlist if needed
     uint64_t dataRunLength = 0; //Length of the data run
-    uint64_t dataRunEnd = 0; //End VCN of the data runlist
+    uint64_t dataRunEnd = 0; //End VCN of the data runlist if needed
     uint64_t dataRunOffset = 0; //Offset to the start of the data run
 
     std::vector<BYTE> buffer(1024);
@@ -126,7 +126,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                         );
 
                         for (int j = 0; j < content.size(); j++) {
-                            if (content[j] == 0) break;
+                            if (content[j] == L'\000') break;
                             std::wcout << wchar_t(content[j]);
                         }
                     }
@@ -140,6 +140,8 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                 dataStart = nBytesToNum(buffer.data(), attributeOffset + 20, 2);
 
                 for (int i = 0; i < dataSize; i++) {
+                    uint64_t end = nBytesToNum(buffer.data(), attributeOffset + i, 4);
+                    if (end == 0xffffffff) break;
                     std::wcout << buffer[attributeOffset + i];
                 }
                 std::wcout << std::endl;
