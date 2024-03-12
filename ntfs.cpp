@@ -56,6 +56,8 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
         return;
     }
 
+    printSectorTable(bootSector.data());
+
     this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
     this->SectorsPerCluster = bootSector[0x0D];
     this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
@@ -65,7 +67,7 @@ void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
     this->HiddenSectors = nBytesToNum(bootSector.data(), 0x1C, 4);
     this->TotalSectors = nBytesToNum(bootSector.data(), 0x28, 8);
     this->StartOfMFT = MFTStartPoint(bootSector.data());
-    this->StartOfMFTMirr = nBytesToNum(bootSector.data(), 0x38, 8) * this->SectorsPerCluster;
+    this->StartOfMFTMirr = nBytesToNum(bootSector.data(), 0x38, 8);
 }
 
 void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
@@ -76,9 +78,9 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     uint64_t nameLength = 0;
     uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
     uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
-    uint64_t dataRunStart = 0; //Start data run of the data
+    uint64_t dataRunStart = 0; //Start VCN of the data runlist
     uint64_t dataRunLength = 0; //Length of the data run
-    uint64_t dataRunEnd = 0; //End data run of the data
+    uint64_t dataRunEnd = 0; //End VCN of the data runlist
     uint64_t dataRunOffset = 0; //Offset to the start of the data run
 
     std::vector<BYTE> buffer(1024);
