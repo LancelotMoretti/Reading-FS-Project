@@ -12,9 +12,6 @@ void printSectorNum(BYTE sector[], int numByte);
 // Print file and folder
 void printFileAndFolder(std::vector<Entry> vect);
 
-// Get start point of RDET and SDET
-uint64_t rdetStartPoint(BYTE sector[]);
-uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster);
 // Read RDET or SDET
 std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET);
 

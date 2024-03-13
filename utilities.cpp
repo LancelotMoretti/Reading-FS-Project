@@ -65,18 +65,6 @@ void printFileAndFolder(std::vector<Entry> vect) {
     if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
 }
 
-uint64_t rdetStartPoint(BYTE bootSector[]) {
-    return nBytesToNum(bootSector, 0x2C, 4);
-}
-
-uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
-    uint64_t sb = bootSector[15] * (1 << 7) * 2 + bootSector[14];
-    uint64_t nf = bootSector[16];
-    uint64_t sf = bootSector[37] * (1 << 7) * 2 + bootSector[36];
-    uint64_t sc = bootSector[13];
-    return sb + sf * nf + (cluster - 2) * sc;
-}
-
 std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
