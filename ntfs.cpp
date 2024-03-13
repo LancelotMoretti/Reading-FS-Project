@@ -239,4 +239,6 @@ uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
         else attributeOffset += attributeSize;
 
     } while (attributeCode != 0);
+    
+    return fileSize;
 }
