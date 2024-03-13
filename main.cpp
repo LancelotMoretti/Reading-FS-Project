@@ -99,6 +99,8 @@ int main() {
                     std::wcout << "-- Invalid choice!" << std::endl;
                     break;
             }
+            system("pause");
+            system("cls");
         } while (choice != 6);
 
         delete volume;
