@@ -124,7 +124,7 @@ void printFileAndFolder(std::vector<Entry> vect) {
     bool isPrinted = false;
     int size = static_cast<int>(vect.size());
     for (int i = 0; i < size; i++) {
-        if (vect[i].getAttr() == L"Archive" || vect[i].getAttr() == L"Subdirectory") {
+        if (vect[i].getAttr().find(L"Archive") != std::wstring::npos || vect[i].getAttr().find(L"Subdirectory") != std::wstring::npos) {
             std::wcout << "Position: " << std::dec << i << std::endl;
             std::wcout << vect[i] << std::endl;
             isPrinted = true;
