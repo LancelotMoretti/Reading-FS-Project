@@ -28,7 +28,6 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
 }
 
 void printSectorNum(BYTE sector[], int numByte) {
-
     std::wcout << L"  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
     for (int i = 0; i < numByte; i += 16) {
         std::wcout << std::hex << std::uppercase << std::setfill(L'0') << std::setw(8) << i << L"   ";
@@ -40,11 +39,15 @@ void printSectorNum(BYTE sector[], int numByte) {
                 std::wcout << L"   ";
             }
         }
+
         std::wcout << L"  ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
-                unsigned char c = sector[i + j];
-                if (c >= 32 && c <= 126) std::wcout << wchar_t(c); // Ascii letters ??????????????
+                wchar_t c = L'a'; // Temp
+                c = c >> 8; // Set to 0
+                c = c << 8; // Set to 0
+                c += sector[i + j]; // Add real data
+                if (c >= 32 && c <= 126) std::wcout << c;
                 else std::wcout << L"."; // Not ascii letters
             }
         }
@@ -57,12 +60,12 @@ void printFileAndFolder(std::vector<Entry> vect) {
     int size = static_cast<int>(vect.size());
     for (int i = 0; i < size; i++) {
         if (vect[i].getAttr().find(L"Archive") != std::wstring::npos || vect[i].getAttr().find(L"Subdirectory") != std::wstring::npos) {
-            std::wcout << "Position: " << std::dec << i << std::endl;
+            std::wcout << L"Position: " << std::dec << i << std::endl;
             std::wcout << vect[i] << std::endl;
             isPrinted = true;
         }
     }
-    if (!isPrinted) std::cout << "No file or folder here!" << std::endl;
+    if (!isPrinted) std::wcout << L"No file or folder here!" << std::endl;
 }
 
 uint64_t rdetStartPoint(BYTE bootSector[]) {
@@ -206,7 +209,6 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
     LONG low = readPoint;
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint  
     ReadFile(device, sector, 1024, &bytesRead, NULL);
-    printSectorNum(sector, 1024);
 
     // Get first attribute's position
     uint64_t offAttr = nBytesToNum(sector, 0x14, 2);
@@ -214,11 +216,13 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
     while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(144)) { // Check 4 first bytes to get attr's ID
         uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
         if (size == 0) {
+            CloseHandle(device);
             return result;
         }
         offAttr += size;
     }
     if (offAttr >= 1024) { // No $INDEX_ROOT
+        CloseHandle(device);
         return result;
     }
     uint64_t offRoot = offAttr;
@@ -273,10 +277,10 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
         if (fileLen == 0) break;
 
         uint64_t flag = nBytesToNum(sector, offEntryRoot + uint64_t(12), 4);
-        if (flag != uint64_t(2) && flag != uint64_t(3)) result.push_back(curFile);
+        if (!(flag & (1 << 1))) result.push_back(curFile);
 
         uint64_t num = nBytesToNum(sector, offEntryRoot + fileLen - uint64_t(8), 8);
-        if (flag == uint64_t(1) || flag == uint64_t(3)) {
+        if (flag & 1) { // Bit 1 is turned on
             if (offBitm != 0xFFFFFFFFFFFFFFFF) {
                 for (int i = 0; i < isUsedVCN.size(); i++) {
                     if (num == isUsedVCN[i]) {
@@ -287,7 +291,7 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
                     }
                 }
             } else listVCN.push_back(num);
-        } else if (flag == uint64_t(2) || flag == uint64_t(3)) break;
+        } else if (flag & (1 << 1)) break; // Bit second is turned on
         offEntryRoot += fileLen; // Next index entry
     }
 
@@ -321,8 +325,7 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
             for (int j = 0; j < listClusters[i].second; j++) {
                 BYTE clsCurrent[4096];
                 ReadFile(device, clsCurrent, 4096, &bytesRead, NULL);
-                printSectorNum(clsCurrent, 4096);
-                    
+
                 // Each cluster is referenced to a VCN, which means an Index record
                 uint64_t curVCN = nBytesToNum(clsCurrent, uint64_t(16), 8);
                 for (int k = 0; k < listVCN.size(); k++) {
@@ -335,21 +338,19 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
                         uint64_t endEntryAllo = nBytesToNum(clsCurrent, uint64_t(28), 4) + uint64_t(24);
 
                         // Read all entries of an Index record
-                        // std::vector<uint64_t> listVCN;
                         while (offEntryAllo <= endEntryAllo) {
                             uint64_t curFile = nBytesToNum(clsCurrent, offEntryAllo, 6);
 
                             // Get file's length
                             uint64_t fileLen = nBytesToNum(clsCurrent, offEntryAllo + uint64_t(8), 2);
                             if (fileLen == 0) break;
-                            std::wcout << std::hex << offEntryAllo << " " << fileLen << std::endl;
 
                             // Get flag state
                             uint64_t flag = nBytesToNum(clsCurrent, offEntryAllo + uint64_t(12), 4);
-                            if (flag != uint64_t(2) && flag != uint64_t(3)) result.push_back(curFile);
+                            if (!(flag & (1 << 1))) result.push_back(curFile);
 
 
-                            if (flag == uint64_t(1) || flag == uint64_t(3)) {
+                            if (flag & 1) { // Bit 1 is turned on
                                 uint64_t num = nBytesToNum(clsCurrent, offEntryAllo + fileLen - uint64_t(8), 8);
                                 if (offBitm != 0xFFFFFFFFFFFFFFFF) {
                                     for (int l = 0; l < isUsedVCN.size(); l++) {
@@ -361,7 +362,7 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
                                         }
                                     }
                                 } else listVCN.push_back(num);
-                            } else if (flag == uint64_t(2) || flag == uint64_t(3)) break;
+                            } else if (flag & (1 << 1)) break;
 
                             offEntryAllo += fileLen; // Next index entry
                         }
@@ -371,68 +372,258 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
             }
         }
     }
-
+    
+    CloseHandle(device);
     return result;
 }
 
-std::wstring readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
-    uint64_t STD_INFO_ContentStart = nBytesToNum(sector, stdInfoStart + 0x14, 2);
-    uint64_t STD_INFO_Flag = nBytesToNum(sector, STD_INFO_ContentStart + 0x20, 4);
-    return flagToMeaningMapping[STD_INFO_Flag];
+std::pair<std::wstring, std::pair<std::wstring, std::wstring>> readSTD_INFO(BYTE sector[], uint64_t offSTD) { // Flag, time, date
+    uint64_t offContent = nBytesToNum(sector, offSTD + 0x14, 2);
+    uint64_t flagByte = nBytesToNum(sector, offSTD + offContent + 0x20, 4);
+    
+    std::wstring flagWstring = L"";
+    for (int i = 0; i < 32; i++) {
+        if (flagByte & (1 << i)) flagWstring += L" | " + flagToMeaningMapping[1 << i];
+    }
+
+    uint64_t timeStamp = nBytesToNum(sector, offSTD + offContent + 0x10, 8);
+    FILETIME fileTime;
+    fileTime.dwHighDateTime = nBytesToNum(sector, offSTD + offContent + 0x14, 4);
+    fileTime.dwLowDateTime = nBytesToNum(sector, offSTD + offContent + 0x10, 4);
+    SYSTEMTIME systemTime;
+    FileTimeToSystemTime(&fileTime, &systemTime);
+
+    std::wstring date = std::to_wstring(systemTime.wDay) + L"/" + std::to_wstring(systemTime.wMonth) + L"/" + std::to_wstring(systemTime.wYear);
+    std::wstring time = std::to_wstring(systemTime.wHour) + L":" + std::to_wstring(systemTime.wMinute) + L":" + std::to_wstring(systemTime.wSecond);
+
+    return std::make_pair(flagWstring, std::make_pair(time, date));
 }
 
-bool readATTRIBUTE_LIST(BYTE sector[], uint64_t attributeListStart) {
-    return true;
+std::pair<bool, std::wstring> readFILE_NAME(BYTE sector[], uint64_t offFileName) {
+    std::wstring name; // $FILE_NAME is always a resident attribute
+
+    int contentStart = sector[offFileName + 0x14];
+    int nameLength = sector[offFileName + contentStart + 0x40];
+    if (sector[offFileName + contentStart + 0x41] == 0x02) return std::make_pair(false, name); // Not this one
+
+    for (int i = 0; i < nameLength * 2; i += 2) {
+        wchar_t temp = L'a';
+        temp = temp >> 8;
+        temp += sector[offFileName + contentStart + 0x42 + i + 1];
+        temp = temp << 8;
+        temp += sector[offFileName + contentStart + 0x42 + i];
+
+        name += temp;
+    }
+    
+    bool isTrue = true;
+    return std::make_pair(isTrue, name);
 }
 
-bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
-    if (sector[fileNameStart + 8] == 0) {
-        //resident
-        int nameLength = sector[fileNameStart + 0x58];
-        int nameNamespace = sector[fileNameStart + 0x59];
-        std::vector<BYTE> name(nameLength * 2);
-        for (int i = 0; i < nameLength * 2; i++) {
-            name[i] = sector[fileNameStart + 0x5A + i];
+void formatListEntries(std::vector<uint64_t> list) {
+    for (int i = 0; i < list.size(); ) {
+        for (int j = i + 1; j < list.size(); ) {
+            if (list[i] == list[j]) {
+                list[j] = list[list.size() - 1];
+                list.pop_back();
+                continue;
+            }
+            j++;
         }
-        //read the name based on nameSpace, like
-        //std::string readFileName(BYTE name[]);
-        return true;
-    }
-    else {
-        //non-resident
-        //I'll find a way to solve this later, for it's rare to encounter this
-        return false;
+        i++;
     }
 }
 
-std::vector<MFTEntry> readNTFSTree(HANDLE device, std::vector<uint64_t> listEntries) {
+uint64_t GetFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64_t mftEntry) {
+    // Attribute information
+    uint64_t attributeCode = 0;
+    uint64_t attributeSize = 0;
+
+    // Current offset in the buffer
+    uint64_t attributeOffset = 0;
+
+    // Flag to check if the attribute is resident or non-resident
+    bool isResident = true;
+
+    uint64_t nameLength = 0;
+    uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
+    uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
+    uint64_t dataRunLength = 0; //Length of the data run
+    uint64_t dataRunOffset = 0; //Offset to the start of the data run
+
+    // Size of content in byte
+    uint64_t fileSize = 0;
+
+    std::vector<BYTE> buffer(1024);
+
+    // Set pointer and read sector
+    DWORD bytesRead;
+    uint64_t readPoint = start + mftEntry * 1024;
+    LONG high = readPoint >> 32;
+    LONG low = readPoint;
+    SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
+    ReadFile(device, buffer.data(), 1024, &bytesRead, NULL);
+
+    do {
+        // Read attribute type and size to jump
+        attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
+        attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
+        nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
+
+        if (attributeCode == 0x80 && nameLength == 0) {
+            isResident = buffer[attributeOffset + 8] == 0;
+
+            if (!isResident) {
+                std::vector<BYTE> content(4096);
+                dataRunOffset = nBytesToNum(buffer.data(), attributeOffset + 32, 2);
+
+                attributeOffset += dataRunOffset;
+                
+                do {
+                    // Read length of datarun
+                    dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
+                    attributeOffset++;
+                    dataSize = dataRunLength & 0x0F;
+                    dataStart = dataRunLength >> 4;
+                    
+                    // Read run length and run offset of datarun
+                    dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
+                    attributeOffset += dataSize;
+                    dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
+                    attributeOffset += dataStart;
+
+                    // Calculate max file size
+                    fileSize += dataSize * 4096;
+
+                    // Read last cluster
+                    readPoint = (dataStart + dataSize - 1) * 4096;
+                    high = readPoint >> 32;
+                    low = readPoint;
+                    SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
+                    ReadFile(device, content.data(), 4096, &bytesRead, NULL);
+
+                    // Minus the unused space
+                    for (int i = 0; i < content.size(); i++) {
+                        if (content[i] == L'\000')
+                            return fileSize - (content.size() - i);
+                    }
+                    
+                } while (dataRunLength != 0);
+
+                return fileSize;
+            }
+            else return nBytesToNum(buffer.data(), attributeOffset + 16, 4);
+        } 
+        else attributeOffset += attributeSize;
+
+    } while (attributeCode != 0);
+    
+    return fileSize;
+}
+
+std::vector<MFTEntry> readNTFSTree(HANDLE device, uint64_t start, std::vector<uint64_t> listEntries) {
     DWORD bytesRead;
     BYTE sector[1024];
 
     std::vector<MFTEntry> result;
     result.clear();
+    std::wstring mftType;
 
     for (int i = 0; i < listEntries.size(); i++) {
-        uint64_t readPoint = listEntries[i];
+        MFTEntry cur;
+
+        uint64_t readPoint = start + uint64_t(listEntries[i] * 1024);
         LONG high = readPoint >> 32;
         LONG low = readPoint;
         SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
         ReadFile(device, sector, 1024, &bytesRead, NULL);
-        //read $STANDARD_INFORMATION
-        uint64_t stdInfoStart = nBytesToNum(sector, 0x14, 2);
-        std::wcout << readSTD_INFO(sector, stdInfoStart) << std::endl;
-        //check if there is $ATTRIBUTE_LIST
-        uint64_t stdInfoSkipOffset = nBytesToNum(sector, stdInfoStart + 4, 4);
-        uint64_t nextAttribute = stdInfoStart + stdInfoSkipOffset;
-        if (nBytesToNum(sector, nextAttribute, 4) == 48) {
-            //$FILE_NAME exists
 
+        // Read flag
+        uint64_t curFlag = nBytesToNum(sector, 0x16, 2);
+        if (curFlag == 0x01) mftType = L"File";
+        else if (curFlag == 0x03) mftType = L"Folder";
+        else continue; // Not file or folder
+
+        uint64_t offAttr = nBytesToNum(sector, 0x14, 2);
+        if (offAttr == 0) continue; // Not a mft entry
+        
+        uint64_t size;
+        while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(16)) { // Check 4 first bytes to get attr's ID
+            size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
+            if (size == 0) break;
+            offAttr += size;
         }
-        else {
-            //parse $ATTRIBUTE_LIST to find $FILE_NAME
-            
+        if (offAttr >= 1024 || size == 0) continue; // No $STANDARD_INFORMATION
+        uint64_t offSTD = offAttr;
+
+        //// FILE_NAME
+        std::pair<bool, std::wstring> curName;
+        bool isNext = false;
+        do {
+            while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(48)) { // Check 4 first bytes to get attr's ID
+                size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
+                if (size == 0) break;
+                offAttr += size;
+            }
+            if (offAttr >= 1024 || size == 0) isNext = true; // No $FILE_NAME
+            uint64_t offFileName = offAttr;
+
+            // Read $FILE_NAME
+            curName = readFILE_NAME(sector, offFileName);
+        } while (!curName.first && !isNext);
+        if (isNext) continue;
+        
+        // Read $STANDARD_INFORMATION
+        std::pair<std::wstring, std::pair<std::wstring, std::wstring>> timeStamp = readSTD_INFO(sector, offSTD);
+
+        // Set data
+        std::wstring tmp = L"";
+        if (mftType == L"File") {
+            for (int i = curName.second.size() - 1; i >= 0; i--) {
+                if (curName.second[i] == L'.') {
+                    for (int j = i + 1; j < curName.second.size(); j++) tmp += curName.second[j];
+                    curName.second.resize(i); // Cut string
+                    break;
+                }
+            }
         }
+
+        // Set data for mft entry
+        cur.setName(curName.second); // Set name
+        if (timeStamp.first != L"") cur.setType(mftType + timeStamp.first);
+        else cur.setType(mftType);
+        cur.setDate(timeStamp.second.second);
+        cur.setTime(timeStamp.second.first);
+        cur.setEntry(listEntries[i]);
+        cur.setExt(tmp);
+
+        // Set size
+        uint64_t curSize = GetFileSize(device, start, 512, listEntries[i]);
+        cur.setSize(curSize);
+
+        // Push
+        result.push_back(cur);
     }
     
+    CloseHandle(device);
     return result;
+}
+
+void printFileAndFolderNTFS(std::vector<MFTEntry> list) {
+    for (int i = 0; i < list.size(); i++) {
+        std::wcout << L"No. " << i + 1 << std::endl;
+        std::wcout << list[i] << std::endl;
+    }
+    if (list.size() == 0) std::wcout << "There's no file or folder here!" << std::endl; 
+}
+
+void printFileAndFolderNoHidden(std::vector<MFTEntry> list) {
+    int index = 1;
+    for (int i = 0; i < list.size(); i++) {
+        std::wstring temp = L"Hidden";
+        if (list[i].getType().find(temp) != std::wstring::npos) continue;
+        std::wcout << L"No. " << index++ << std::endl;
+        std::wcout << list[i] << std::endl;
+    }
+    if (list.size() == 0) std::wcout << "There's no file or folder here!" << std::endl; 
 }

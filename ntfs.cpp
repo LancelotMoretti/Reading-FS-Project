@@ -4,6 +4,14 @@ NTFS::NTFS(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volumeHa
     ReadBootSector(bootSector);
 }
 
+void NTFS::SetCurEntry(uint64_t entry) {
+    this->curEntry = entry;
+}
+
+uint64_t NTFS::GetCurEntry() {
+    return this->curEntry;
+}
+
 std::string NTFS::GetFileSystemType() {
     return "NTFS";
 }
@@ -31,11 +39,35 @@ void NTFS::ReadAtPosition(uint64_t position) {
 }
 
 void NTFS::ReturnToRoot() {
-    std::wcout << "Returning to start" << std::endl;
+    this->curEntry = uint64_t(5);
 }
 
 void NTFS::ReturnToParent() {
-    std::wcout << "Returning to parent" << std::endl;
+    if (this->curEntry == uint64_t(5)) return; // Exception/Quick exit
+
+    // Prepare for reading data
+    DWORD bytesRead;
+    uint64_t readPoint = this->StartOfMFT * this->BytesPerSector + this->curEntry * 1024;
+    LONG high = readPoint >> 32;
+    LONG low = readPoint;
+    SetFilePointer(this->VolumeHandle, low, &high, FILE_BEGIN);
+    BYTE sector[1024];
+    ReadFile(this->VolumeHandle, sector, 1024, &bytesRead, NULL);
+
+    // Find $FILE_NAME position
+    uint64_t startAttr = nBytesToNum(sector, 0x14, 2);
+    while (startAttr < 1024 && nBytesToNum(sector, startAttr, 4) != uint64_t(48)) {
+        uint64_t size = nBytesToNum(sector, startAttr + uint64_t(4), 4);
+        if (size == 0) return;
+        startAttr += size;
+    }
+    if (startAttr >= 1024) return;
+    uint64_t offFileName = startAttr;
+
+    // Seek to parent position
+    uint64_t startContent = offFileName + nBytesToNum(sector, 0x20, 2); // Starting position of content section
+    uint64_t parentEntry = nBytesToNum(sector, startContent, 6); // Six bytes not eight bytes
+    this->curEntry = parentEntry;
 }
 
 void NTFS::ViewVolumeInformation() {
@@ -160,85 +192,4 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
         else attributeOffset += attributeSize;
 
     } while (attributeCode != 0);
-}
-
-uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
-    // Attribute information
-    uint64_t attributeCode = 0;
-    uint64_t attributeSize = 0;
-
-    // Current offset in the buffer
-    uint64_t attributeOffset = 0;
-
-    // Flag to check if the attribute is resident or non-resident
-    bool isResident = true;
-
-    uint64_t nameLength = 0;
-    uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
-    uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
-    uint64_t dataRunLength = 0; //Length of the data run
-    uint64_t dataRunOffset = 0; //Offset to the start of the data run
-
-    // Size of content in byte
-    uint64_t fileSize = 0;
-
-    std::vector<BYTE> buffer(1024);
-
-    readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
-
-    do {
-        // Read attribute type and size to jump
-        attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
-        attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
-        nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
-
-        if (attributeCode == 0x80 && nameLength == 0) {
-            isResident = buffer[attributeOffset + 8] == 0;
-
-            if (!isResident) {
-                std::vector<BYTE> content(this->SectorsPerCluster * this->BytesPerSector);
-                dataRunOffset = nBytesToNum(buffer.data(), attributeOffset + 32, 2);
-
-                attributeOffset += dataRunOffset;
-                
-                do {
-                    // Read length of datarun
-                    dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
-                    attributeOffset++;
-                    dataSize = dataRunLength & 0x0F;
-                    dataStart = dataRunLength >> 4;
-                    
-                    // Read run length and run offset of datarun
-                    dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
-                    attributeOffset += dataSize;
-                    dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
-                    attributeOffset += dataStart;
-
-                    // Calculate max file size
-                    fileSize += dataSize * this->SectorsPerCluster * this->BytesPerSector;
-
-                    // Read last cluster
-                    readSector(this->VolumeHandle,
-                        (dataStart + dataSize - 1) * this->SectorsPerCluster * this->BytesPerSector,
-                        content.data(),
-                        this->BytesPerSector * this->SectorsPerCluster
-                    );
-
-                    // Minus the unused space
-                    for (int i = 0; i < content.size(); i++) {
-                        if (content[i] == L'\000')
-                            return fileSize - (content.size() - i);
-                    }
-                    
-                } while (dataRunLength != 0);
-
-                return fileSize;
-            }
-            else return nBytesToNum(buffer.data(), attributeOffset + 16, 4);
-        } 
-        else attributeOffset += attributeSize;
-
-    } while (attributeCode != 0);
-    
-    return fileSize;
 }

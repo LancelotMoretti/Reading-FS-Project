@@ -81,7 +81,7 @@ void MFTEntry::setExt(std::wstring ext) {
     this->ext = ext;
 }
 
-void MFTEntry::setAttr(std::wstring type) {
+void MFTEntry::setType(std::wstring type) {
     this->type = type;
 }
 
@@ -93,15 +93,15 @@ void MFTEntry::setDate(std::wstring date) {
     this->date = date;
 }
 
-void MFTEntry::setCluster(int entry) {
+void MFTEntry::setEntry(uint64_t entry) {
     this->mftEntry = entry;
 }
 
-void MFTEntry::setSize(int size) {
+void MFTEntry::setSize(uint64_t size) {
     this->size = size;
 }
 
-std::wstring MFTEntry::getAttr() {
+std::wstring MFTEntry::getType() {
     return this->type;
 }
 
@@ -113,23 +113,12 @@ std::wstring MFTEntry::getExt() {
     return this->ext;
 }
 
-void MFTEntry::FormatName() {
-    int len = this->name.length(), index = 0;
-    wchar_t* temp = new wchar_t [len + 1];
-    for (wchar_t c : this->name) temp[index++] = c;
-    index--;
-    while (index > -1 && this->name[index] == L' ') index--;
-    temp[index + 1] = L'\0';
-    this->name = temp;
-    delete []temp;
-}
-
 std::wostream& operator << (std::wostream& out, const MFTEntry& cur) {
     out << L"Name: " << cur.name << std::endl;
     if (cur.ext != L"") out << L"Extension: " << cur.ext << std::endl;
     out << L"Type: " << cur.type << std::endl;
     out << L"Last modified time: " << cur.date << ", " << cur.time << std::endl;
-    out << L"MFT entry index: " << cur.mftEntry << std::endl;
+    out << L"MFT entry index: " << std::dec << cur.mftEntry << std::endl;
     out << L"Size: " << cur.size << std::endl;
     return out;
 }

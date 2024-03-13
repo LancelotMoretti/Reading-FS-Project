@@ -11,6 +11,7 @@ private:
     uint64_t TotalSectors;
     uint64_t StartOfMFT;
     uint64_t StartOfMFTMirr;
+    uint64_t curEntry;
 
     // List of entries in current directory
     std::vector<MFTEntry> MFTEntries;
@@ -18,7 +19,6 @@ private:
     // Methods for processing NTFS
     void ReadBootSector(std::vector<BYTE>& buffer);
     void ReadAndDisplayFileData(uint64_t mftEntry);
-    uint64_t GetFileSize(uint64_t mftEntry);
 
 public:
     // Constructor
@@ -31,6 +31,10 @@ public:
     void ReturnToParent();
     void ViewVolumeInformation();
     void ViewFolderTree();
+
+    // Getter, Setter
+    void SetCurEntry(uint64_t entry);
+    uint64_t GetCurEntry();
 
     // Destructor
     ~NTFS() = default;
