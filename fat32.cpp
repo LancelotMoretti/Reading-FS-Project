@@ -76,7 +76,7 @@ void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
     this->SizeOfVolume = nBytesToNum(bootSector.data(), 0x20, 4);
     this->SectorsPerFAT = nBytesToNum(bootSector.data(), 0x24, 4);
 
-    this->StartOfRDET = nBytesToNum(bootSector.data(), 0x2C, 4) * this->BytesPerSector;
+    this->StartOfRDET = rdetStartPoint(bootSector.data()) * this->BytesPerSector;
 }
 
 void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
