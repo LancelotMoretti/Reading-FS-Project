@@ -1,5 +1,6 @@
 #ifndef FAT32_HPP_
 #define FAT32_HPP_
+
 #include "volume.hpp"
 
 class Fat32 : public Volume {

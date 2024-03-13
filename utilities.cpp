@@ -150,17 +150,6 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
     return sb + sf * nf + (cluster - 2) * sc;
 }
 
-std::map<int, std::wstring> flag32ToMeaningMapping = {
-    {0x01, L"Read Only"},
-    {0x02, L"Hidden"},
-    {0x04, L"System"},
-    {0x08, L"Volume Label"},
-    {0x10, L"Subdirectory"},
-    {0x20, L"Archive"},
-    {0x40, L"Device"},
-    {0x80, L"Unused"},
-};
-
 std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
@@ -187,14 +176,14 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
 
             if (sector[i + 11] == 0x0F) { // Sub entry
                 std::wstring tempName = L"";
-                for (int j = 1; j < 11; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
-                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
-                }
-                for (int j = 14; j < 26; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
-                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
-                }
-                for (int j = 28; j < 32; j += 2) if (sector[i + j] != 0x00 && sector[i + j] != 0xFF) {
-                    tempName += byteToWString(std::vector<BYTE>(sector + i + j, sector + i + j + 1), 1);
+                wchar_t tempChar = L'\000';
+                for (int j = 1; j < 32; j += 2) {
+                    if (j == 11) j = 14;
+                    if (j == 26) j = 28;
+                    tempChar = sector[i + j + 1];
+                    tempChar <<= 8;
+                    tempChar += sector[i + j];
+                    tempName += tempChar;
                 }
                 name = tempName + name;
                 hasSubEntry = true;
@@ -453,25 +442,6 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
 
     return result;
 }
-
-std::map<int, std::wstring> flagToMeaningMapping = {
-    {0x0001, L"Read Only"},
-    {0x0002, L"Hidden"},
-    {0x0004, L"System"},
-    {0x0020, L"Archive"},
-    {0x0040, L"Device"},
-    {0x0080, L"Normal"},
-    {0x0100, L"Temporary"},
-    {0x0200, L"Sparse File"},
-    {0x0400, L"Reparse Point"},
-    {0x0800, L"Compressed"},
-    {0x1000, L"Offline"},
-    {0x2000, L"Not Content Indexed"},
-    {0x4000, L"Encrypted"},
-    {0x10000000, L"Directory"},
-    {0x20000000, L"Index View"},
-    {0x40000000, L"Virtual"}
-};
 
 std::wstring readSTD_INFO(BYTE sector[], uint64_t stdInfoStart) {
     uint64_t STD_INFO_ContentStart = nBytesToNum(sector, stdInfoStart + 0x14, 2);

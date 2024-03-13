@@ -1,5 +1,6 @@
 #ifndef VOLUME_HPP_
 #define VOLUME_HPP_
+
 #include "utilities.hpp"
 
 class Volume {

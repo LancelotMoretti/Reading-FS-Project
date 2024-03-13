@@ -1,8 +1,7 @@
-#include "entry.hpp"
-#include <map>
-
 #ifndef UTILITIES_HPP_
 #define UTILITIES_HPP_
+
+#include "entry.hpp"
 
 // Read sector from volume
 bool readSector(HANDLE devive, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);

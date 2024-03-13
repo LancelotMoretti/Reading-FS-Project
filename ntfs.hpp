@@ -1,5 +1,6 @@
 #ifndef NTFS_HPP_
 #define NTFS_HPP_
+
 #include "volume.hpp"
 
 class NTFS : public Volume {

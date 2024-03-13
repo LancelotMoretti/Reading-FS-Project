@@ -1,20 +1,7 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <windows.h>
-#include <cstdio>
-#include <vector>
-#include <iomanip>
-#include <cmath>
-#include <cstdint>
-#include <locale>
-#include <sstream>
-#include <codecvt>
-#include <io.h>
-#include <fcntl.h>
-
 #ifndef ENTRY_HPP_
 #define ENTRY_HPP_
+
+#include "typedef.hpp"
 
 #ifndef FAT32_ENTRY_
 #define FAT32_ENTRY_

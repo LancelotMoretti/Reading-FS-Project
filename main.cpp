@@ -76,15 +76,18 @@ int main() {
             switch (choice) {
                 case 1:
                     volume->ViewVolumeInformation();
+                    system("pause");
                     break;
                 case 2:
                     volume->ViewFolderTree();
+                    system("pause");
                     break;
                 case 3: {
                     uint64_t position;
                     std::wcout << "-- Enter position: ";
                     std::wcin >> position;
                     volume->ReadAtPosition(position);
+                    system("pause");
                     break;
                 }
                 case 4:
@@ -94,13 +97,12 @@ int main() {
                     volume->ReturnToRoot();
                     break;
                 case 6:
+                    system("cls");
                     break;
                 default:
                     std::wcout << "-- Invalid choice!" << std::endl;
                     break;
             }
-            system("pause");
-            system("cls");
         } while (choice != 6);
 
         delete volume;
