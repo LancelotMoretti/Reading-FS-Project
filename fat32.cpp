@@ -113,7 +113,7 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
         remainingBytes -= bytesReaded;
         currentCluster = this->GetNextFATCluster(currentCluster);
     }
-    std::wcout << std::endl;
+    std::wcout << std::endl << std::endl;
 }
 
 uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {

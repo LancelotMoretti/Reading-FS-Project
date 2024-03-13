@@ -164,6 +164,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     do {
         // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
+        if (attributeCode == 0) break;
         attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
 
@@ -220,8 +221,9 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                     if (end == 0xffffffff) break;
                     std::wcout << buffer[attributeOffset + i];
                 }
-                std::wcout << std::endl;
             }
+            
+            std::wcout << std::endl << std::endl;
 
             return;
         } 

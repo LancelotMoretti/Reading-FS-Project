@@ -18,7 +18,9 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
         return false;
     }
 
-    SetFilePointer(device, readPoint, NULL, FILE_BEGIN);    //Set a Point to Read
+    LONG high = readPoint >> 32;
+    LONG low = readPoint;
+    SetFilePointer(device, low, &high, FILE_BEGIN);    //Set a Point to Read
 
     if (!ReadFile(device, sector, bytesPerSector, &bytesRead, NULL)) {
         std::wcout << "ReadFile: " << GetLastError() << std::endl;
@@ -459,12 +461,13 @@ uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     ReadFile(device, buffer.data(), 1024, &bytesRead, NULL);
 
-    // attributeOffset = nBytesToNum(buffer.data(), 0x14, 2); // Offset to the first attribute
+    attributeOffset = nBytesToNum(buffer.data(), 0x14, 2); // Offset to the first attribute
 
     do {
         // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
         attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
+        if (attributeSize == 0) break;
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
 
         if (attributeCode == 0x80 && nameLength == 0) {
