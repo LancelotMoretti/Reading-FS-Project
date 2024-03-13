@@ -44,7 +44,7 @@ void printSectorNum(BYTE sector[], int numByte) {
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
                 unsigned char c = sector[i + j];
-                if (c >= 32 && c <= 126) std::cout << std::dec << c; // Ascii letters ??????????????
+                if (c >= 32 && c <= 126) std::wcout << wchar_t(c); // Ascii letters ??????????????
                 else std::wcout << L"."; // Not ascii letters
             }
         }
