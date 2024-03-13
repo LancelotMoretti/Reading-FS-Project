@@ -92,6 +92,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
 
     do {
+        // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
         attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
@@ -100,6 +101,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
             isResident = buffer[attributeOffset + 8] == 0;
 
             if (!isResident) {
+                // Read data attribute's data if non-resident
                 std::vector<BYTE> content(this->SectorsPerCluster * this->BytesPerSector);
                 dataRunStart = nBytesToNum(buffer.data(), attributeOffset + 16, 8);
                 dataRunEnd = nBytesToNum(buffer.data(), attributeOffset + 24, 8);
@@ -108,16 +110,19 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                 attributeOffset += dataRunOffset;
                 
                 do {
+                    // Read length of datarun
                     dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
                     attributeOffset++;
                     dataSize = dataRunLength & 0x0F;
                     dataStart = dataRunLength >> 4;
                     
+                    // Read run length and run offset of datarun
                     dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
                     attributeOffset += dataSize;
                     dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
                     attributeOffset += dataStart;
 
+                    // Read data and display
                     for (int i = 0; i < dataSize; i++) {
                         readSector(this->VolumeHandle,
                             (dataStart + i) * this->SectorsPerCluster * this->BytesPerSector,
@@ -134,9 +139,11 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                 } while (dataRunLength != 0);
             }
             else {
+                // Read start offset and size of data
                 dataSize = nBytesToNum(buffer.data(), attributeOffset + 16, 4);
                 dataStart = nBytesToNum(buffer.data(), attributeOffset + 20, 2);
 
+                // Read data end display
                 for (int i = 0; i < dataSize; i++) {
                     uint64_t end = nBytesToNum(buffer.data(), attributeOffset + i, 4);
                     if (end == 0xffffffff) break;
@@ -177,6 +184,7 @@ uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
     readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
 
     do {
+        // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
         attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
@@ -191,31 +199,30 @@ uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
                 attributeOffset += dataRunOffset;
                 
                 do {
-                    // Calculate datarun
+                    // Read length of datarun
                     dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
                     attributeOffset++;
                     dataSize = dataRunLength & 0x0F;
                     dataStart = dataRunLength >> 4;
                     
-                    // Calculate location to read data
+                    // Read run length and run offset of datarun
                     dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
                     attributeOffset += dataSize;
                     dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
                     attributeOffset += dataStart;
 
+                    // Calculate max file size
                     fileSize += dataSize * this->SectorsPerCluster * this->BytesPerSector;
 
-                    for (int i = 0; i < dataSize; i++) {
-                        readSector(this->VolumeHandle,
-                            (dataStart + i) * this->SectorsPerCluster * this->BytesPerSector,
-                            content.data(),
-                            this->BytesPerSector * this->SectorsPerCluster
-                        );
+                    readSector(this->VolumeHandle,
+                        (dataStart + dataSize - 1) * this->SectorsPerCluster * this->BytesPerSector,
+                        content.data(),
+                        this->BytesPerSector * this->SectorsPerCluster
+                    );
 
-                        for (int j = 0; j < content.size(); j++) {
-                            if (content[j] == L'\000')
-                                return fileSize - (dataSize - i - 1) * this->SectorsPerCluster * this->BytesPerSector - (content.size() - j);
-                        }
+                    for (int i = 0; i < content.size(); i++) {
+                        if (content[i] == L'\000')
+                            return fileSize - (content.size() - i);
                     }
                     
                 } while (dataRunLength != 0);
