@@ -66,12 +66,7 @@ void printFileAndFolder(std::vector<Entry> vect) {
 }
 
 uint64_t rdetStartPoint(BYTE bootSector[]) {
-    uint64_t sb = bootSector[15] * (1 << 7) * 2 + bootSector[14];
-    uint64_t nf = bootSector[16];
-    uint64_t sf = bootSector[37] * (1 << 7) * 2 + bootSector[36];
-    uint64_t sc = bootSector[13];
-    uint64_t k = bootSector[45] * (1 << 7) * 2 + bootSector[44];
-    return sb + sf * nf + (k - 2) * sc;
+    return nBytesToNum(bootSector, 0x2C, 4);
 }
 
 uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
