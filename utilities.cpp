@@ -459,6 +459,8 @@ uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64
     SetFilePointer(device, low, &high, FILE_BEGIN); // Start reading from readPoint
     ReadFile(device, buffer.data(), 1024, &bytesRead, NULL);
 
+    // attributeOffset = nBytesToNum(buffer.data(), 0x14, 2); // Offset to the first attribute
+
     do {
         // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
@@ -466,7 +468,7 @@ uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
 
         if (attributeCode == 0x80 && nameLength == 0) {
-            isResident = buffer[attributeOffset + 8] == 0;
+            isResident = (buffer[attributeOffset + 8] == 0);
 
             if (!isResident) {
                 std::vector<BYTE> content(4096);
@@ -477,15 +479,16 @@ uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64
                 do {
                     // Read length of datarun
                     dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
+                    if (dataRunLength == 0) break;
                     attributeOffset++;
                     dataSize = dataRunLength & 0x0F;
                     dataStart = dataRunLength >> 4;
                     
                     // Read run length and run offset of datarun
-                    dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
                     attributeOffset += dataSize;
-                    dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
+                    dataSize = nBytesToNum(buffer.data(), attributeOffset - dataSize, dataSize);
                     attributeOffset += dataStart;
+                    dataStart = nBytesToNum(buffer.data(), attributeOffset - dataStart, dataStart);
 
                     // Calculate max file size
                     fileSize += dataSize * 4096;
