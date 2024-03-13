@@ -8,7 +8,7 @@ public:
 
     // Inherited methods
     std::string GetFileSystemType();
-    void ReadFileAtPosition(uint64_t position);
+    void ReadAtPosition(uint64_t position);
     void ReturnToRoot();
     void ReturnToParent();
     void ViewVolumeInformation();

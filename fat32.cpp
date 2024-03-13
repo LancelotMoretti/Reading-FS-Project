@@ -12,7 +12,7 @@ Fat32::Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volume
     }
 }
 
-void Fat32::ReadFileAtPosition(uint64_t position) {
+void Fat32::ReadAtPosition(uint64_t position) {
     // Check if position is valid
     if (position >= this->Entries.back().size()) {
         std::wcout << "Invalid position!" << std::endl;

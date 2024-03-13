@@ -7,7 +7,7 @@ public:
     Volume(HANDLE volumeHandle) : VolumeHandle(volumeHandle) {}
     
     virtual std::string GetFileSystemType() = 0;
-    virtual void ReadFileAtPosition(uint64_t position) = 0;
+    virtual void ReadAtPosition(uint64_t position) = 0;
     virtual void ReturnToRoot() = 0;
     virtual void ReturnToParent() = 0;
     virtual void ViewVolumeInformation() = 0;

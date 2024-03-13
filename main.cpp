@@ -84,7 +84,7 @@ int main() {
                     uint64_t position;
                     std::wcout << "-- Enter position: ";
                     std::wcin >> position;
-                    volume->ReadFileAtPosition(position);
+                    volume->ReadAtPosition(position);
                     break;
                 }
                 case 4:

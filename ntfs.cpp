@@ -8,7 +8,7 @@ std::string NTFS::GetFileSystemType() {
     return "NTFS";
 }
 
-void NTFS::ReadFileAtPosition(uint64_t position) {
+void NTFS::ReadAtPosition(uint64_t position) {
     if (position >= this->MFTEntries.size()) {
         std::wcout << "Invalid position!" << std::endl;
         return;
