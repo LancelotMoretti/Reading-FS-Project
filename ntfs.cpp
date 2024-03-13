@@ -214,12 +214,14 @@ uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
                     // Calculate max file size
                     fileSize += dataSize * this->SectorsPerCluster * this->BytesPerSector;
 
+                    // Read last cluster
                     readSector(this->VolumeHandle,
                         (dataStart + dataSize - 1) * this->SectorsPerCluster * this->BytesPerSector,
                         content.data(),
                         this->BytesPerSector * this->SectorsPerCluster
                     );
 
+                    // Minus the unused space
                     for (int i = 0; i < content.size(); i++) {
                         if (content[i] == L'\000')
                             return fileSize - (content.size() - i);
