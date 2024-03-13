@@ -87,7 +87,6 @@ int main() {
                     std::wcout << "-- Enter position: ";
                     std::wcin >> position;
                     volume->ReadAtPosition(position);
-                    system("pause");
                     break;
                 }
                 case 4:

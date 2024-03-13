@@ -216,13 +216,11 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
     while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(144)) { // Check 4 first bytes to get attr's ID
         uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
         if (size == 0) {
-            CloseHandle(device);
             return result;
         }
         offAttr += size;
     }
     if (offAttr >= 1024) { // No $INDEX_ROOT
-        CloseHandle(device);
         return result;
     }
     uint64_t offRoot = offAttr;
@@ -372,8 +370,7 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
             }
         }
     }
-    
-    CloseHandle(device);
+
     return result;
 }
 
@@ -420,21 +417,19 @@ std::pair<bool, std::wstring> readFILE_NAME(BYTE sector[], uint64_t offFileName)
     return std::make_pair(isTrue, name);
 }
 
-void formatListEntries(std::vector<uint64_t> list) {
-    for (int i = 0; i < list.size(); ) {
-        for (int j = i + 1; j < list.size(); ) {
+void formatListEntries(std::vector<uint64_t>& list) {
+    for (int i = 0; i < list.size(); i++) {
+        for (int j = i + 1; j < list.size(); j++) {
             if (list[i] == list[j]) {
                 list[j] = list[list.size() - 1];
                 list.pop_back();
                 continue;
             }
-            j++;
         }
-        i++;
     }
 }
 
-uint64_t GetFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64_t mftEntry) {
+uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64_t mftEntry) {
     // Attribute information
     uint64_t attributeCode = 0;
     uint64_t attributeSize = 0;
@@ -516,7 +511,7 @@ uint64_t GetFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64
         } 
         else attributeOffset += attributeSize;
 
-    } while (attributeCode != 0);
+    } while (attributeCode != 0 && attributeOffset < 1024);
     
     return fileSize;
 }
@@ -598,20 +593,19 @@ std::vector<MFTEntry> readNTFSTree(HANDLE device, uint64_t start, std::vector<ui
         cur.setExt(tmp);
 
         // Set size
-        uint64_t curSize = GetFileSize(device, start, 512, listEntries[i]);
+        uint64_t curSize = getFileSize(device, start, 512, listEntries[i]);
         cur.setSize(curSize);
 
         // Push
         result.push_back(cur);
     }
     
-    CloseHandle(device);
     return result;
 }
 
 void printFileAndFolderNTFS(std::vector<MFTEntry> list) {
     for (int i = 0; i < list.size(); i++) {
-        std::wcout << L"No. " << i + 1 << std::endl;
+        std::wcout << L"No. " << i << std::endl;
         std::wcout << list[i] << std::endl;
     }
     if (list.size() == 0) std::wcout << "There's no file or folder here!" << std::endl; 

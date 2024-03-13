@@ -20,10 +20,13 @@ void Fat32::ReadAtPosition(uint64_t position) {
     }
 
     // Read file content if it is a text file else print error message
-    if (this->Entries.back()[position].getAttr().find(L"Archive") != std::wstring::npos && this->Entries.back()[position].getAttr().find(L"Subdirectory") == std::wstring::npos) {
+    if (this->Entries.back()[position].getAttr().find(L"Archive")!= std::wstring::npos && this->Entries.back()[position].getAttr().find(L"Subdirectory") == std::wstring::npos) {
         if (this->Entries.back()[position].getExt() == L"TXT") {
             std::wcout << "File content: " << std::endl;
-            this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());
+            this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(),
+                this->Entries.back()[position].getSize()
+            );
+            system("pause");
         }
         else {
             std::wcout << "File type not supported!" << std::endl;
@@ -32,7 +35,12 @@ void Fat32::ReadAtPosition(uint64_t position) {
     }
     // Open folder if it not a file
     else {
-        this->Entries.push_back(readRDETSDET(this->VolumeHandle, this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector, false));
+        this->Entries.push_back(
+            readRDETSDET(this->VolumeHandle,
+                this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector,
+                false
+            )
+        );
     }
 }
 
@@ -82,7 +90,7 @@ void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
 void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
     // Vector to store the data of a cluster
     std::vector<BYTE> buffer;
-    buffer.resize(BytesPerSector * SectorsPerCluster);
+    buffer.resize(this->BytesPerSector * this->SectorsPerCluster);
 
     // Current cluster (in position) and remaining bytes to read
     uint64_t currentCluster = startCluster;
@@ -93,7 +101,8 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
         this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer);
 
         // Number of bytes to read in the current cluster
-        uint64_t bytesReaded = remainingBytes < (BytesPerSector * SectorsPerCluster) ? remainingBytes : (BytesPerSector * SectorsPerCluster);
+        uint64_t bytesReaded = remainingBytes < (this->BytesPerSector * this->SectorsPerCluster)
+                             ? remainingBytes : (this->BytesPerSector * this->SectorsPerCluster);
         
         // Print the data
         for (uint64_t i = 0; i < bytesReaded; i++) {
@@ -127,11 +136,17 @@ uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
 }
 
 uint64_t Fat32::GetDataCluster(uint64_t cluster) {
-    return SectorsPerBootSector + (NumOfFAT * SectorsPerFAT) + (cluster - 2) * SectorsPerCluster;
+    return this->SectorsPerBootSector
+        + (this->NumOfFAT * this->SectorsPerFAT)
+        + (cluster - 2) * this->SectorsPerCluster;
 }
 
 void Fat32::ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer) {
-    readSector(this->VolumeHandle, cluster * this->BytesPerSector, buffer.data(), this->BytesPerSector * this->SectorsPerCluster);
+    readSector(this->VolumeHandle,
+        cluster * this->BytesPerSector,
+        buffer.data(),
+        this->BytesPerSector * this->SectorsPerCluster
+    );
 }
 
 std::string Fat32::GetFileSystemType() {

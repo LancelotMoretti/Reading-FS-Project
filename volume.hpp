@@ -17,6 +17,7 @@ public:
     virtual ~Volume() = default;
 
 protected:
+    // Volume specific
     HANDLE VolumeHandle;
     int BytesPerSector;
     int SectorsPerCluster;

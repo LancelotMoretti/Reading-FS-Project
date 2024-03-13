@@ -31,7 +31,8 @@ uint64_t MFTStartPoint(BYTE vbr[]);
 // Read MFT
 std::pair<std::wstring, std::pair<std::wstring, std::wstring>> readSTD_INFO(BYTE sector[], uint64_t offSTD);
 std::pair<bool, std::wstring> readFILE_NAME(BYTE sector[], uint64_t offFileName);
-void formatListEntries(std::vector<uint64_t> list);
+void formatListEntries(std::vector<uint64_t>& list);
+uint64_t getFileSize(HANDLE device, uint64_t start, uint64_t bytePersect, uint64_t mftEntry);
 std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint);
 std::vector<MFTEntry> readNTFSTree(HANDLE device, uint64_t start, std::vector<uint64_t> listEntries);
 
