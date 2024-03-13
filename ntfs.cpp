@@ -132,8 +132,6 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                     }
                     
                 } while (dataRunLength != 0);
-
-                attributeOffset = 1024;
             }
             else {
                 dataSize = nBytesToNum(buffer.data(), attributeOffset + 16, 4);
@@ -146,10 +144,87 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
                 }
                 std::wcout << std::endl;
             }
-            
-            break;
+
+            return;
         } 
         else attributeOffset += attributeSize;
 
-    } while (attributeCode != 0 && attributeOffset < 1024);
+    } while (attributeCode != 0);
+}
+
+uint64_t NTFS::GetFileSize(uint64_t mftEntry) {
+    // Attribute information
+    uint64_t attributeCode = 0;
+    uint64_t attributeSize = 0;
+
+    // Current offset in the buffer
+    uint64_t attributeOffset = 0;
+
+    // Flag to check if the attribute is resident or non-resident
+    bool isResident = true;
+
+    uint64_t nameLength = 0;
+    uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
+    uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
+    uint64_t dataRunLength = 0; //Length of the data run
+    uint64_t dataRunOffset = 0; //Offset to the start of the data run
+
+    // Size of content in byte
+    uint64_t fileSize = 0;
+
+    std::vector<BYTE> buffer(1024);
+
+    readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
+
+    do {
+        attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
+        attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
+        nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
+
+        if (attributeCode == 0x80 && nameLength == 0) {
+            isResident = buffer[attributeOffset + 8] == 0;
+
+            if (!isResident) {
+                std::vector<BYTE> content(this->SectorsPerCluster * this->BytesPerSector);
+                dataRunOffset = nBytesToNum(buffer.data(), attributeOffset + 32, 2);
+
+                attributeOffset += dataRunOffset;
+                
+                do {
+                    // Calculate datarun
+                    dataRunLength = nBytesToNum(buffer.data(), attributeOffset, 1);
+                    attributeOffset++;
+                    dataSize = dataRunLength & 0x0F;
+                    dataStart = dataRunLength >> 4;
+                    
+                    // Calculate location to read data
+                    dataSize = nBytesToNum(buffer.data(), attributeOffset, dataSize);
+                    attributeOffset += dataSize;
+                    dataStart = nBytesToNum(buffer.data(), attributeOffset, dataStart);
+                    attributeOffset += dataStart;
+
+                    fileSize += dataSize * this->SectorsPerCluster * this->BytesPerSector;
+
+                    for (int i = 0; i < dataSize; i++) {
+                        readSector(this->VolumeHandle,
+                            (dataStart + i) * this->SectorsPerCluster * this->BytesPerSector,
+                            content.data(),
+                            this->BytesPerSector * this->SectorsPerCluster
+                        );
+
+                        for (int j = 0; j < content.size(); j++) {
+                            if (content[j] == L'\000')
+                                return fileSize - (dataSize - i - 1) * this->SectorsPerCluster * this->BytesPerSector - (content.size() - j);
+                        }
+                    }
+                    
+                } while (dataRunLength != 0);
+
+                return fileSize;
+            }
+            else return nBytesToNum(buffer.data(), attributeOffset + 16, 4);
+        } 
+        else attributeOffset += attributeSize;
+
+    } while (attributeCode != 0);
 }

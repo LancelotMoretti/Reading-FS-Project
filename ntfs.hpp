@@ -24,6 +24,7 @@ private:
 
     void ReadBootSector(std::vector<BYTE>& buffer);
     void ReadAndDisplayFileData(uint64_t mftEntry);
+    uint64_t GetFileSize(uint64_t mftEntry);
 
 };
 
