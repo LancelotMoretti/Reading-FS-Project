@@ -24,6 +24,9 @@ void NTFS::ReadFileAtPosition(uint64_t position) {
         }
     }
     else {
+        uint64_t start = this->MFTEntries[position].getEntry() * 1024 + this->StartOfMFT * this->BytesPerSector;
+        std::vector<uint64_t> listEntries = readFolder(this->VolumeHandle, start);
+        std::vector<MFTEntry> entries = readNTFSTree(this->VolumeHandle, listEntries);   
     }
 }
 

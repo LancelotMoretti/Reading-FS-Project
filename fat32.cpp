@@ -20,7 +20,7 @@ void Fat32::ReadFileAtPosition(uint64_t position) {
     }
 
     // Read file content if it is a text file else print error message
-    if (this->Entries.back()[position].getAttr() == L"Archive") {
+    if (this->Entries.back()[position].getAttr().find(L"Archive") != std::wstring::npos) {
         if (this->Entries.back()[position].getExt() == L"TXT") {
             std::wcout << "File content: " << std::endl;
             this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(), this->Entries.back()[position].getSize());

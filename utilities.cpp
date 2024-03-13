@@ -22,10 +22,8 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
 
     if (!ReadFile(device, sector, bytesPerSector, &bytesRead, NULL)) {
         std::wcout << "ReadFile: " << GetLastError() << std::endl;
-        CloseHandle(device);
         return false;
     }
-    CloseHandle(device);
     return true;
 }
 
@@ -152,6 +150,17 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
     return sb + sf * nf + (cluster - 2) * sc;
 }
 
+std::map<int, std::wstring> flag32ToMeaningMapping = {
+    {0x01, L"Read Only"},
+    {0x02, L"Hidden"},
+    {0x04, L"System"},
+    {0x08, L"Volume Label"},
+    {0x10, L"Subdirectory"},
+    {0x20, L"Archive"},
+    {0x40, L"Device"},
+    {0x80, L"Unused"},
+};
+
 std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
@@ -210,45 +219,14 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
                 else cur.setExt(ext); // Others
 
                 // Attribute
-                switch (sector[i + 11]) {
-                    case 0x01: {
-                        cur.setAttr(L"Read Only");
-                        break;
-                    }
-                    case 0x02: {
-                        cur.setAttr(L"Hidden");
-                        break;
-                    }
-                    case 0x04: {
-                        cur.setAttr(L"System");
-                        break;
-                    }
-                    case 0x08: {
-                        cur.setAttr(L"Volume Label");
-                        break;
-                    }
-                    case 0x10: {
-                        cur.setAttr(L"Subdirectory");
-                        break;
-                    }
-                    case 0x20: {
-                        cur.setAttr(L"Archive");
-                        break;
-                    }
-                    case 0x40: {
-                        cur.setAttr(L"Device");
-                        break;
-                    }
-                    case 0x80: {
-                        cur.setAttr(L"Unused");
-                        break;
-                    }
-                    default: {
-                        if ((sector[i + 11] & 0x04) == 0x04) cur.setAttr(L"System");
-                        else if ((sector[i + 11] & 0x10) == 0x10) cur.setAttr(L"Subdirectory");
-                        else cur.setAttr(L"Unknown");
+                std::wstring attr = L"";
+                for (int j = 0; j < 8; j++) {
+                    if (sector[i + 11] & (1 << j)) {
+                        attr += flag32ToMeaningMapping[1 << j] + L" | ";
                     }
                 }
+                attr.erase(attr.length() - 3, 3);
+                cur.setAttr(attr);
 
                 // Time
                 std::wstring curTime = std::to_wstring(sector[i + 23] >> 3) + L":"; // Hour
@@ -275,7 +253,6 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
         if (start != 0) start = 0;
     }
 
-    CloseHandle(device);
     return result;
 }
 
@@ -295,21 +272,11 @@ uint64_t MFTStartPoint(BYTE vbr[]) {
     return k * sc;
 }
 
-std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) { 
+std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) { 
     // This funtion returns list of entries of all files and folders in a directory
 
     DWORD bytesRead;
-    HANDLE device = NULL;
     BYTE sector[1024];
-    device = CreateFileW(
-        volume,
-        GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        NULL
-    );
 
     std::vector<uint64_t> result;
     result.clear();
@@ -326,13 +293,11 @@ std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) {
     while (offAttr < 1024 && nBytesToNum(sector, offAttr, 4) != uint64_t(144)) { // Check 4 first bytes to get attr's ID
         uint64_t size = nBytesToNum(sector, offAttr + uint64_t(4), 4); // Get next 4 bytes to get attr's size
         if (size == 0) {
-            CloseHandle(device);
             return result;
         }
         offAttr += size;
     }
     if (offAttr >= 1024) { // No $INDEX_ROOT
-        CloseHandle(device);
         return result;
     }
     uint64_t offRoot = offAttr;
@@ -485,8 +450,7 @@ std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint) {
             }
         }
     }
-    
-    CloseHandle(device);
+
     return result;
 }
 
@@ -539,11 +503,9 @@ bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart) {
     }
 }
 
-std::vector<MFTEntry> readNTFSTree(LPCWSTR volume, std::vector<uint64_t> listEntries) {
+std::vector<MFTEntry> readNTFSTree(HANDLE device, std::vector<uint64_t> listEntries) {
     DWORD bytesRead;
-    HANDLE device = NULL;
     BYTE sector[1024];
-    device = CreateFileW(volume, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
     std::vector<MFTEntry> result;
     result.clear();
@@ -570,6 +532,5 @@ std::vector<MFTEntry> readNTFSTree(LPCWSTR volume, std::vector<uint64_t> listEnt
         }
     }
     
-    CloseHandle(device);
     return result;
 }

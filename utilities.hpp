@@ -36,7 +36,7 @@ uint64_t MFTStartPoint(BYTE vbr[]);
 std::wstring readSTD_INFO(BYTE sector[], uint64_t stdInfoStart);
 bool readATTRIBUTE_LIST(BYTE sector[], uint64_t attributeListStart);
 bool readFILE_NAME(BYTE sector[], uint64_t fileNameStart);
-std::vector<uint64_t> readFolder(LPCWSTR volume, uint64_t readPoint);
-std::vector<MFTEntry> readNTFSTree(LPCWSTR volume, std::vector<uint64_t> listEntries);
+std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint);
+std::vector<MFTEntry> readNTFSTree(HANDLE device, std::vector<uint64_t> listEntries);
 
 #endif /* UTILITIES_HPP_ */
