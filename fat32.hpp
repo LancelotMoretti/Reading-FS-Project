@@ -4,19 +4,6 @@
 #include "volume.hpp"
 
 class Fat32 : public Volume {
-public:
-    Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle);
-
-    // Inherited methods
-    std::string GetFileSystemType();
-    void ReadAtPosition(uint64_t position);
-    void ReturnToRoot();
-    void ReturnToParent();
-    void ViewVolumeInformation();
-    void ViewFolderTree();
-
-    ~Fat32() = default;
-
 private:
     // Fat32 specific
     uint64_t SectorsPerBootSector;
@@ -35,6 +22,21 @@ private:
     uint64_t GetNextFATCluster(uint64_t currentCluster);
     uint64_t GetDataCluster(uint64_t cluster);
     void ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer);
+
+public:
+    // Constructor
+    Fat32(std::vector<BYTE>& bootSector, HANDLE volumeHandle);
+
+    // Inherited methods
+    std::string GetFileSystemType();
+    void ReadAtPosition(uint64_t position);
+    void ReturnToRoot();
+    void ReturnToParent();
+    void ViewVolumeInformation();
+    void ViewFolderTree();
+
+    // Destructor
+    ~Fat32() = default;
 };
 
 #endif /* FAT32_HPP_ */

@@ -17,7 +17,7 @@ private:
     uint64_t cluster; // Starting cluster
     uint64_t size; // Size
 
-    //
+    // 32 bytes of the entry
     BYTE inByte[32];
 public:
     Entry() = default;
@@ -81,7 +81,10 @@ public:
     // Methods
     void FormatName(); // Remove trailing spaces
 
+    // Overload
     friend std::wostream& operator<<(std::wostream&, const MFTEntry&);
+
+    ~MFTEntry() = default;
 };
 
 #endif /* MFT_ENTRY_ */

@@ -27,36 +27,6 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
     return true;
 }
 
-void printSectorTable(BYTE sector[]) {
-    printf("FAT32 PARTITION Boot Sector:\n");
-    printf(" Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
-    for (uint64_t i = 0; i < 512; i += 16) {
-        std::wcout << std::hex << std::setfill(L'0') << std::setw(7) << i << "   ";
-        for (uint64_t j = 0; j < 16; j++) {
-            if (i + j < 512) {
-                std::wcout << std::hex << std::setfill(L'0') << std::setw(2) << static_cast<uint64_t>(sector[i + j]) << " ";
-            }
-            else {
-                std::wcout << "   ";
-            }
-        }
-        std::wcout << "  ";
-        for (uint64_t j = 0; j < 16; j++) {
-            if (i + j < 512) {
-                BYTE c = sector[i + j];
-                if (c >= 32 && c <= 126) {
-                    std::wcout << wchar_t(c);
-                }
-                else {
-                    std::wcout << ".";
-                }
-            }
-        }
-        std::wcout << "\n";
-    }
-
-}
-
 void printSectorNum(BYTE sector[], int numByte) {
 
     std::wcout << L"  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
@@ -70,7 +40,6 @@ void printSectorNum(BYTE sector[], int numByte) {
                 std::wcout << L"   ";
             }
         }
-
         std::wcout << L"  ";
         for (int j = 0; j < 16; j++) {
             if (i + j < numByte) {
@@ -81,43 +50,6 @@ void printSectorNum(BYTE sector[], int numByte) {
         }
         std::wcout << std::endl;
     }
-}
-
-std::wstring byteToWString(std::vector<BYTE> input, int wSize) {
-    std::wstring wide(reinterpret_cast<wchar_t*>(input.data()), wSize);
-    return wide;
-}
-
-std::string fourBytesToString(BYTE entry[], int start) { // Little endian
-    std::string result = "";
-    for (int i = 0; i < 4; i++) {
-        result += entry[start + i];
-    }
-    return result;
-}
-
-std::string wcharToUtf8(const std::wstring& unicode) {
-    uint64_t uni_len = unicode.length();
-    std::string utf8;
-    for (uint64_t i = 0; i < uni_len; i++) {
-        if (unicode[i] < 0x80) utf8 += unicode[i];
-        else if (unicode[i] < 0x800) {
-            utf8 += (0xc0 | (unicode[i] >> 6));
-            utf8 += (0x80 | (unicode[i] & 0x3f));
-        } 
-        else if (unicode[i] < 0x10000) {
-            utf8 += (0xe0 | (unicode[i] >> 12));
-            utf8 += (0x80 | ((unicode[i] >> 6) & 0x3f));
-            utf8 += (0x80 | (unicode[i] & 0x3f));
-        }
-        else if (unicode[i] < 0x110000) {
-            utf8 += (0xf0 | (unicode[i] >> 18));
-            utf8 += (0x80 | ((unicode[i] >> 12) & 0x3f));
-            utf8 += (0x80 | ((unicode[i] >> 6) & 0x3f));
-            utf8 += (0x80 | (unicode[i] & 0x3f));
-        }
-    }
-    return utf8;
 }
 
 void printFileAndFolder(std::vector<Entry> vect) {

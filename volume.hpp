@@ -22,9 +22,6 @@ protected:
     int SectorsPerCluster;
     int SectorsPerTrack;
     int NumOfHeads;
-
-    int NextReadingOffset;
-
 };
 
 #endif /* VOLUME_HPP_ */

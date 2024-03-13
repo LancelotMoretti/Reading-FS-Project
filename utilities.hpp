@@ -7,13 +7,7 @@
 bool readSector(HANDLE devive, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector);
 
 // Print sector table
-void printSectorTable(BYTE sector[]);
 void printSectorNum(BYTE sector[], int numByte);
-
-// Convert utf16 byte array to utf8 string
-std::wstring byteToWString(std::vector<BYTE> input, int wSize);
-std::string fourBytesToString(BYTE entry[], int start);
-std::string wcharToUtf8(const std::wstring& wstr);
 
 // Print file and folder
 void printFileAndFolder(std::vector<Entry> vect);
