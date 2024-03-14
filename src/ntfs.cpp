@@ -166,8 +166,8 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     do {
         // Read attribute type and size to jump
         attributeCode = nBytesToNum(buffer.data(), attributeOffset + 0, 4);
-        if (attributeCode == 0) break;
         attributeSize = nBytesToNum(buffer.data(), attributeOffset + 4, 4);
+        if (attributeSize == 0) break;
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
 
         if (attributeCode == 0x80 && nameLength == 0) {
