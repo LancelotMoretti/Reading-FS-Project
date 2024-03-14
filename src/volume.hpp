@@ -5,8 +5,10 @@
 
 class Volume {
 public:
+    // Constructor
     Volume(HANDLE volumeHandle) : VolumeHandle(volumeHandle) {}
     
+    // Pure virtual methods for interface
     virtual std::string GetFileSystemType() = 0;
     virtual void ReadAtPosition(uint64_t position) = 0;
     virtual void ReturnToRoot() = 0;
@@ -14,6 +16,7 @@ public:
     virtual void ViewVolumeInformation() = 0;
     virtual void ViewFolderTree() = 0;
 
+    // Destructor
     virtual ~Volume() = default;
 
 protected:

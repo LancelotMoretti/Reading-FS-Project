@@ -51,6 +51,7 @@ std::wstring FATEntry::getExt() {
 }
 
 void FATEntry::FormatName() {
+    // Remove trailing spaces
     int len = this->name.length(), index = 0;
     wchar_t* temp = new wchar_t [len + 1];
     for (wchar_t c : this->name) temp[index++] = c;

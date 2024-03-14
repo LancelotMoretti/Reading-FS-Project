@@ -28,12 +28,15 @@ std::string NTFS::GetFileSystemType() {
 }
 
 void NTFS::ReadAtPosition(uint64_t position) {
+    // Check if position is valid
     if (position >= this->Entries.size()) {
         std::wcout << "Invalid position!" << std::endl;
         return;
     }
 
+    // Check if the entry is a file or a folder
     if (this->Entries[position].getType().find(L"File") != std::wstring::npos) {
+        // Check if the file type is supported
         if (this->Entries[position].getExt() == L"txt") {
             std::wcout << "File content: " << std::endl;
             this->ReadAndDisplayFileData(this->Entries[position].getEntry());
@@ -107,6 +110,7 @@ void NTFS::ReturnToParent() {
 }
 
 void NTFS::ViewVolumeInformation() {
+    // Display volume information
     std::wcout << "BytesPerSector: " << std::dec << this->BytesPerSector << std::endl;
     std::wcout << "SectorsPerCluster: " << std::dec << this->SectorsPerCluster << std::endl;
     std::wcout << "SectorsPerTrack: " << std::dec << this->SectorsPerTrack << std::endl;
@@ -123,15 +127,19 @@ void NTFS::ViewFolderTree() {
 }
 
 void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
+    // Check if boot sector is valid
     if (bootSector.size() < 512) {
         return;
     }
 
+    // Read boot sector information
+    // Volume information
     this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
     this->SectorsPerCluster = bootSector[0x0D];
     this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
     this->NumOfHeads = nBytesToNum(bootSector.data(), 0x1A, 2);
 
+    // NTFS specific information
     this->ReservedSectors = nBytesToNum(bootSector.data(), 0x0E, 2);
     this->HiddenSectors = nBytesToNum(bootSector.data(), 0x1C, 4);
     this->TotalSectors = nBytesToNum(bootSector.data(), 0x28, 8);
@@ -150,17 +158,27 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
     // Flag to check if the attribute is resident or non-resident
     bool isResident = true;
 
+    // Length of the name of the attribute
     uint64_t nameLength = 0;
+
+    // Data information
     uint64_t dataSize = 0; //Size of data in bytes if resident and number of clusters if non-resident
     uint64_t dataStart = 0; //Offset to the start of the data if resident and start cluster if non-resident
+
+    // First byte of the datarun
+    uint64_t dataRunLength = 0;
+
+    // Data run information
     uint64_t dataRunStart = 0; //Start VCN of the data runlist if needed
-    uint64_t dataRunLength = 0; //Length of the data run
     uint64_t dataRunEnd = 0; //End VCN of the data runlist if needed
-    uint64_t dataRunOffset = 0; //Offset to the start of the data run
+
+    // Offset to the first byte of the data runlist from the start of the attribute
+    uint64_t dataRunOffset = 0;
 
     std::vector<BYTE> buffer(1024);
 
-    readMultiSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
+    // Read MFT entry
+    readMultiSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024);
 
     attributeOffset = nBytesToNum(buffer.data(), 0x14, 2); // Offset to the first attribute
 
@@ -171,6 +189,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
         if (attributeSize == 0) break;
         nameLength = nBytesToNum(buffer.data(), attributeOffset + 9, 1);
 
+        // Check if the attribute is a data attribute and if it has no name
         if (attributeCode == 0x80 && nameLength == 0) {
             isResident = (buffer[attributeOffset + 8] == 0);
 

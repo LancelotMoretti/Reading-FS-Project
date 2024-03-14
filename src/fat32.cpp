@@ -21,6 +21,7 @@ void Fat32::ReadAtPosition(uint64_t position) {
 
     // Read file content if it is a text file else print error message
     if (this->Entries.back()[position].getAttr().find(L"Archive")!= std::wstring::npos && this->Entries.back()[position].getAttr().find(L"Subdirectory") == std::wstring::npos) {
+        // Check if the file is a text file
         if (this->Entries.back()[position].getExt() == L"TXT") {
             std::wcout << "File content: " << std::endl;
             this->ReadAndDisplayFileData(this->Entries.back()[position].getStartCluster(),
@@ -58,6 +59,7 @@ void Fat32::ReturnToParent() {
 }
 
 void Fat32::ViewVolumeInformation() {
+    // Print the volume information
     std::wcout << "BytesPerSector: " << std::dec << this->BytesPerSector << std::endl;
     std::wcout << "SectorsPerCluster: " << std::dec << this->SectorsPerCluster << std::endl;
     std::wcout << "SectorsPerTrack: " << std::dec << this->SectorsPerTrack << std::endl;
@@ -74,16 +76,19 @@ void Fat32::ViewFolderTree() {
 }
 
 void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
+    // Read the boot sector
+    // Volume information
     this->BytesPerSector = nBytesToNum(bootSector.data(), 0x0B, 2);
     this->SectorsPerCluster = bootSector[0x0D];
     this->SectorsPerTrack = nBytesToNum(bootSector.data(), 0x18, 2);
     this->NumOfHeads = nBytesToNum(bootSector.data(), 0x1A, 2);
 
+    // FAT specific information
     this->SectorsPerBootSector = nBytesToNum(bootSector.data(), 0x0E, 2);
     this->NumOfFAT = bootSector[0x10];
     this->SizeOfVolume = nBytesToNum(bootSector.data(), 0x20, 4);
     this->SectorsPerFAT = nBytesToNum(bootSector.data(), 0x24, 4);
-
+    
     this->StartOfRDET = rdetStartPoint(bootSector.data()) * this->BytesPerSector;
 }
 

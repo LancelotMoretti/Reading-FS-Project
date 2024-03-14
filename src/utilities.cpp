@@ -1,17 +1,21 @@
 #include "utilities.hpp"
+  
+// Read data byte by byte from a drive
+/*
+HANDLE device = NULL;
+
+device = CreateFileW(volume,    // Volume to open
+    GENERIC_READ,           // Access mode
+    FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
+    NULL,                   // Security Descriptor
+    OPEN_EXISTING,          // How to create
+    FILE_FLAG_BACKUP_SEMANTICS,                      // File attributes
+    NULL);                  // Handle to template
+
+*/
 
 bool readMultiSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesToRead) {
-    uint64_t retCode = 0;
     DWORD bytesRead;
-    // HANDLE device = NULL;
-
-    // device = CreateFileW(volume,    // Volume to open
-    //     GENERIC_READ,           // Access mode
-    //     FILE_SHARE_READ | FILE_SHARE_WRITE,        // Share Mode
-    //     NULL,                   // Security Descriptor
-    //     OPEN_EXISTING,          // How to create
-    //     FILE_FLAG_BACKUP_SEMANTICS,                      // File attributes
-    //     NULL);                  // Handle to template
 
     if (device == INVALID_HANDLE_VALUE) {   // Open Error
         std::wcout << "CreateFile: " << GetLastError() << std::endl;
