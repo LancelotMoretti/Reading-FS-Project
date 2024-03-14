@@ -40,6 +40,7 @@ void NTFS::ReadAtPosition(uint64_t position) {
         }
         else {
             std::wcout << "File type not supported!" << std::endl;
+            std::wcout << "Please use the reader for the file type: " << this->MFTEntries[position].getExt() << std::endl;
         }
     }
     else {
