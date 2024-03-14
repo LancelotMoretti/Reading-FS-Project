@@ -90,7 +90,7 @@ void NTFS::ReturnToParent() {
     uint64_t offFileName = startAttr;
 
     // Seek to parent position
-    uint64_t startContent = offFileName + nBytesToNum(sector, 0x20, 2); // Starting position of content section
+    uint64_t startContent = offFileName + 24; // Starting position of content section
     uint64_t parentEntry = nBytesToNum(sector, startContent, 6); // Six bytes not eight bytes
     this->curEntry = parentEntry;
 
