@@ -16,8 +16,9 @@ This is our project for the course CSC10007 - Operating System. Program is writt
 
 ## How to run
 ```bash
-1. g++ *.cpp -o main
-2. runas /user:Administrator main.exe
+1. cd to the 'src' directory
+2. g++ *.cpp -o main
+3. runas /user:Administrator main.exe
     (or main.exe -> Properties -> Compatibility -> Run this program as an administrator
     ./main.exe)
     (or open Visual Studio Code as an administrator and ./main.exe)
