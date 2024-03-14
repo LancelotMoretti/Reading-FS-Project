@@ -16,7 +16,7 @@ This is our project for the course CSC10007 - Operating System. Program is writt
 
 ## How to run
 ```bash
-1. cd to the 'src' directory
+1. cd src (move to the 'src' directory)
 2. g++ *.cpp -o main
 3. runas /user:Administrator main.exe
     (or main.exe -> Properties -> Compatibility -> Run this program as an administrator
