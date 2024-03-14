@@ -25,8 +25,9 @@ This is our project for the course CSC10007 - Operating System. Program is writt
 
 ## Documentation
 
-- [Project Report](Report.pdf)
+- Read the [report](./Report.pdf) for more details about the project.
+- Click [here](https://youtu.be/EyP39YcvNA4) to watch the demo video.
 
 ## Acknowledgements
 
-We woild like to thank our lecturer, Mr. Trần Đình Toàn, for his guidance and support throughout the course as well as valuable materials we need to complete this project.
+We woild like to thank our lecturer, Mr. Lê Viết Long, for his guidance and support throughout the course as well as valuable materials we need to complete this project.
