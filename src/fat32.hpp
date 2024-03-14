@@ -14,13 +14,13 @@ private:
     
     // List of entries
     // Last vector is the entries of current directory
-    std::vector<std::vector<Entry>> Entries;
+    std::vector<std::vector<FATEntry>> Entries;
 
     // Methods for processing FAT32
     void ReadBootSector(std::vector<BYTE>& bootSector);
-    void ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize);
-    uint64_t GetNextFATCluster(uint64_t currentCluster);
-    uint64_t GetDataCluster(uint64_t cluster);
+    void ReadAndDisplayFileData(uint64_t startCLusterFATPos, uint64_t fileSize);
+    uint64_t GetNextClusterPos(uint64_t curClusterFATPos);
+    uint64_t ToDataCluster(uint64_t cluster);
     void ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer);
 
 public:

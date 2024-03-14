@@ -1,6 +1,6 @@
 #include "typedef.hpp"
 
-std::map<int, std::wstring> flag32ToMeaningMapping = {
+std::map<int, std::wstring> fat32FlagToMeaning = {
     {0x01, L"Read Only"},
     {0x02, L"Hidden"},
     {0x04, L"System"},
@@ -11,7 +11,7 @@ std::map<int, std::wstring> flag32ToMeaningMapping = {
     {0x80, L"Unused"},
 };
 
-std::map<int, std::wstring> flagToMeaningMapping = {
+std::map<int, std::wstring> ntfsFlagToMeaning = {
     {0x0001, L"Read Only"},
     {0x0002, L"Hidden"},
     {0x0004, L"System"},

@@ -1,3 +1,7 @@
+#include "typedef.hpp"
+#include "entry.hpp"
+#include "utilities.hpp"
+#include "volume.hpp"
 #include "fat32.hpp"
 #include "ntfs.hpp"
 
@@ -43,7 +47,7 @@ int main() {
             continue;
         }
 
-        readSector(device, 0, sector.data(), 512);
+        readMultiSector(device, 0, sector.data(), 512);
         if (sector[3] == 'N' && sector[4] == 'T' && sector[5] == 'F' && sector[6] == 'S') {
             std::wcout << "-- Detected NTFS file system" << std::endl;
             volume = new NTFS(sector, device);

@@ -1,56 +1,56 @@
 #include "entry.hpp"
 
-///////////////////////////////////////////////////////// Fat32 Entry /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////// Fat32 FATEntry /////////////////////////////////////////////////////////
 
-void Entry::setName(std::wstring name) {
+void FATEntry::setName(std::wstring name) {
     this->name = name;
 }
 
-void Entry::setExt(std::wstring ext) {
+void FATEntry::setExt(std::wstring ext) {
     this->ext = ext;
 }
 
-void Entry::setAttr(std::wstring attr) {
+void FATEntry::setAttr(std::wstring attr) {
     this->attr = attr;
 }
 
-void Entry::setTime(std::wstring time) {
+void FATEntry::setTime(std::wstring time) {
     this->time = time;
 }
 
-void Entry::setDate(std::wstring date) {
+void FATEntry::setDate(std::wstring date) {
     this->date = date;
 }
 
-void Entry::setCluster(uint64_t clus) {
+void FATEntry::setCluster(uint64_t clus) {
     this->cluster = clus;
 }
 
-void Entry::setSize(uint64_t size) {
+void FATEntry::setSize(uint64_t size) {
     this->size = size;
 }
 
-void Entry::setByte(BYTE sector[], uint64_t pos) {
+void FATEntry::setByte(BYTE sector[], uint64_t pos) {
     for (uint64_t i = 0; i < 32; i++) inByte[i] = sector[pos + i];
 }
 
-std::wstring Entry::getAttr() {
+std::wstring FATEntry::getAttr() {
     return this->attr;
 }
 
-uint64_t Entry::getStartCluster() {
+uint64_t FATEntry::getStartCluster() {
     return this->cluster;
 }
 
-uint64_t Entry::getSize() {
+uint64_t FATEntry::getSize() {
     return this->size;
 }
 
-std::wstring Entry::getExt() {
+std::wstring FATEntry::getExt() {
     return this->ext;
 }
 
-void Entry::FormatName() {
+void FATEntry::FormatName() {
     int len = this->name.length(), index = 0;
     wchar_t* temp = new wchar_t [len + 1];
     for (wchar_t c : this->name) temp[index++] = c;
@@ -61,17 +61,17 @@ void Entry::FormatName() {
     delete []temp;
 }
 
-std::wostream& operator << (std::wostream& out, const Entry& cur) {
-    out << L"Name: " << cur.name << std::endl;
-    if (cur.ext != L"") out << L"Extension: " << cur.ext << std::endl;
-    out << L"Type: " << cur.attr << std::endl;
-    out << L"Last modified time: " << cur.date << ", " << cur.time << std::endl;
-    out << L"Starting cluster: " << cur.cluster << std::endl;
-    out << L"Size: " << cur.size << std::endl;
+std::wostream& operator<<(std::wostream& out, const FATEntry& fatEntry) {
+    out << L"Name: " << fatEntry.name << std::endl;
+    if (fatEntry.ext != L"") out << L"Extension: " << fatEntry.ext << std::endl;
+    out << L"Type: " << fatEntry.attr << std::endl;
+    out << L"Last modified time: " << fatEntry.date << ", " << fatEntry.time << std::endl;
+    out << L"Starting cluster: " << fatEntry.cluster << std::endl;
+    out << L"Size: " << fatEntry.size << std::endl;
     return out;
 }
 
-///////////////////////////////////////////////////////// MFT Entry /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////// MFT FATEntry /////////////////////////////////////////////////////////
 
 void MFTEntry::setName(std::wstring name) {
     this->name = name;
@@ -113,12 +113,12 @@ std::wstring MFTEntry::getExt() {
     return this->ext;
 }
 
-std::wostream& operator << (std::wostream& out, const MFTEntry& cur) {
-    out << L"Name: " << cur.name << std::endl;
-    if (cur.ext != L"") out << L"Extension: " << cur.ext << std::endl;
-    out << L"Type: " << cur.type << std::endl;
-    out << L"Last modified time: " << cur.date << ", " << cur.time << std::endl;
-    out << L"MFT entry index: " << std::dec << cur.mftEntry << std::endl;
-    out << L"Size: " << cur.size << std::endl;
+std::wostream& operator<<(std::wostream& out, const MFTEntry& mftEntry) {
+    out << L"Name: " << mftEntry.name << std::endl;
+    if (mftEntry.ext != L"") out << L"Extension: " << mftEntry.ext << std::endl;
+    out << L"Type: " << mftEntry.type << std::endl;
+    out << L"Last modified time: " << mftEntry.date << ", " << mftEntry.time << std::endl;
+    out << L"MFT entry index: " << std::dec << mftEntry.mftEntry << std::endl;
+    out << L"Size: " << mftEntry.size << std::endl;
     return out;
 }

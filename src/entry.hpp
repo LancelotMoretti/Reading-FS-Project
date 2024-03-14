@@ -6,9 +6,9 @@
 #ifndef FAT32_ENTRY_
 #define FAT32_ENTRY_
 
-class Entry {
+class FATEntry {
 private:
-    // Entry specific
+    // FATEntry specific
     std::wstring name; // Name
     std::wstring ext; // Extension
     std::wstring attr; // Attribute
@@ -20,7 +20,8 @@ private:
     // 32 bytes of the entry
     BYTE inByte[32];
 public:
-    Entry() = default;
+    // Constructor
+    FATEntry() = default;
 
     // Setters
     void setByte(BYTE sector[], uint64_t pos);
@@ -42,9 +43,10 @@ public:
     void FormatName(); // Remove trailing spaces
 
     // Overload
-    friend std::wostream& operator << (std::wostream&, const Entry&);
+    friend std::wostream& operator << (std::wostream&, const FATEntry&);
 
-    ~Entry() = default;
+    // Destructor
+    ~FATEntry() = default;
 };
 
 #endif /* FAT32_ENTRY_ */
@@ -62,6 +64,7 @@ private:
     uint64_t mftEntry; // Starting cluster
     uint64_t size; // Size
 public:
+    // Constructor
     MFTEntry() = default;
 
     // Setters
@@ -81,6 +84,7 @@ public:
     // Overload
     friend std::wostream& operator<<(std::wostream&, const MFTEntry&);
 
+    // Destructors
     ~MFTEntry() = default;
 };
 

@@ -1,6 +1,6 @@
 #include "utilities.hpp"
 
-bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesPerSector) {
+bool readMultiSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesToRead) {
     uint64_t retCode = 0;
     DWORD bytesRead;
     // HANDLE device = NULL;
@@ -22,14 +22,14 @@ bool readSector(HANDLE device, uint64_t readPoint, BYTE* sector, uint64_t bytesP
     LONG low = readPoint;
     SetFilePointer(device, low, &high, FILE_BEGIN);    //Set a Point to Read
 
-    if (!ReadFile(device, sector, bytesPerSector, &bytesRead, NULL)) {
+    if (!ReadFile(device, sector, bytesToRead, &bytesRead, NULL)) {
         std::wcout << "ReadFile: " << GetLastError() << std::endl;
         return false;
     }
     return true;
 }
 
-void printSectorNum(BYTE sector[], int numByte) {
+void printMultiSector(BYTE* sector, int numByte) {
     std::wcout << L"  Offset    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F" << std::endl;
     for (int i = 0; i < numByte; i += 16) {
         std::wcout << std::hex << std::uppercase << std::setfill(L'0') << std::setw(8) << i << L"   ";
@@ -57,20 +57,20 @@ void printSectorNum(BYTE sector[], int numByte) {
     }
 }
 
-void printFileAndFolder(std::vector<Entry> vect) {
+void printFolderTreeFat32(std::vector<FATEntry> list) {
     bool isPrinted = false;
-    int size = static_cast<int>(vect.size());
+    int size = static_cast<int>(list.size());
     for (int i = 0; i < size; i++) {
-        if (vect[i].getAttr().find(L"Archive") != std::wstring::npos || vect[i].getAttr().find(L"Subdirectory") != std::wstring::npos) {
-            std::wcout << L"Position: " << std::dec << i << std::endl;
-            std::wcout << vect[i] << std::endl;
+        if (list[i].getAttr().find(L"Archive") != std::wstring::npos || list[i].getAttr().find(L"Subdirectory") != std::wstring::npos) {
+            std::wcout << L"No. " << std::dec << i << std::endl;
+            std::wcout << list[i] << std::endl;
             isPrinted = true;
         }
     }
     if (!isPrinted) std::wcout << L"No file or folder here!" << std::endl;
 }
 
-uint64_t rdetStartPoint(BYTE bootSector[]) {
+uint64_t rdetStartPoint(BYTE* bootSector) {
     uint64_t sb = bootSector[15] * (1 << 7) * 2 + bootSector[14];
     uint64_t nf = bootSector[16];
     uint64_t sf = bootSector[37] * (1 << 7) * 2 + bootSector[36];
@@ -79,7 +79,7 @@ uint64_t rdetStartPoint(BYTE bootSector[]) {
     return sb + sf * nf + (k - 2) * sc;
 }
 
-uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
+uint64_t sdetStartPoint(BYTE* bootSector, uint64_t cluster) {
     uint64_t sb = bootSector[15] * (1 << 7) * 2 + bootSector[14];
     uint64_t nf = bootSector[16];
     uint64_t sf = bootSector[37] * (1 << 7) * 2 + bootSector[36];
@@ -87,13 +87,13 @@ uint64_t sdetStartPoint(BYTE bootSector[], uint64_t cluster) {
     return sb + sf * nf + (cluster - 2) * sc;
 }
 
-std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
+std::vector<FATEntry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) {
     int start = isRDET ? 0 : 64; // True: RDET, False: SDET
 
     DWORD bytesRead;
     BYTE sector[512];
 
-    std::vector<Entry> result;
+    std::vector<FATEntry> result;
     result.clear();
 
     LONG high = readPoint >> 32;
@@ -125,7 +125,7 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
                 name = tempName + name;
                 hasSubEntry = true;
             } else { // Main entry
-                Entry cur;
+                FATEntry cur;
                 cur.setByte(sector, i);
 
                 // Set name
@@ -148,7 +148,7 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
                 std::wstring attr = L"";
                 for (int j = 0; j < 8; j++) {
                     if (sector[i + 11] & (1 << j)) {
-                        attr += flag32ToMeaningMapping[1 << j] + L" | ";
+                        attr += fat32FlagToMeaning[1 << j] + L" | ";
                     }
                 }
                 attr.erase(attr.length() - 3, 3);
@@ -182,23 +182,19 @@ std::vector<Entry> readRDETSDET(HANDLE device, uint64_t readPoint, bool isRDET) 
     return result;
 }
 
-uint64_t nBytesToNum(BYTE entry[], uint64_t start, int numBytes) {
+uint64_t nBytesToNum(BYTE* buffer, uint64_t start, int numBytes) {
     uint64_t result = 0;
-    for (uint64_t i = 0; i < numBytes; i++) result += entry[start + i] * (uint64_t)pow(2, 8 * i);
+    for (uint64_t i = 0; i < numBytes; i++) result += buffer[start + i] * (uint64_t)pow(2, 8 * i);
     return result;
 }
 
-uint64_t VBRStartPoint(BYTE mbr[]) {
-    return nBytesToNum(mbr, 38, 4);
-}
-
-uint64_t MFTStartPoint(BYTE vbr[]) {
-    uint64_t sc = vbr[13]; // sector / cluster
-    uint64_t k = nBytesToNum(vbr, 48, 8); // Starting cluster
+uint64_t MFTStartPoint(BYTE* bootSector) {
+    uint64_t sc = bootSector[13]; // sector / cluster
+    uint64_t k = nBytesToNum(bootSector, 48, 8); // Starting cluster
     return k * sc;
 }
 
-std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) { 
+std::vector<uint64_t> readFolderEntry(HANDLE device, uint64_t readPoint) { 
     // This funtion returns list of entries of all files and folders in a directory
 
     DWORD bytesRead;
@@ -376,13 +372,13 @@ std::vector<uint64_t> readFolder(HANDLE device, uint64_t readPoint) {
     return result;
 }
 
-std::pair<std::wstring, std::pair<std::wstring, std::wstring>> readSTD_INFO(BYTE sector[], uint64_t offSTD) { // Flag, time, date
+std::pair<std::wstring, std::pair<std::wstring, std::wstring>> readSTD_INFO(BYTE* sector, uint64_t offSTD) { // Flag, time, date
     uint64_t offContent = nBytesToNum(sector, offSTD + 0x14, 2);
     uint64_t flagByte = nBytesToNum(sector, offSTD + offContent + 0x20, 4);
     
     std::wstring flagWstring = L"";
     for (int i = 0; i < 32; i++) {
-        if (flagByte & (1 << i)) flagWstring += L" | " + flagToMeaningMapping[1 << i];
+        if (flagByte & (1 << i)) flagWstring += L" | " + ntfsFlagToMeaning[1 << i];
     }
 
     uint64_t timeStamp = nBytesToNum(sector, offSTD + offContent + 0x10, 8);
@@ -398,7 +394,7 @@ std::pair<std::wstring, std::pair<std::wstring, std::wstring>> readSTD_INFO(BYTE
     return std::make_pair(flagWstring, std::make_pair(time, date));
 }
 
-std::pair<bool, std::wstring> readFILE_NAME(BYTE sector[], uint64_t offFileName) {
+std::pair<bool, std::wstring> readFILE_NAME(BYTE* sector, uint64_t offFileName) {
     std::wstring name; // $FILE_NAME is always a resident attribute
 
     int contentStart = sector[offFileName + 0x14];
@@ -609,7 +605,7 @@ std::vector<MFTEntry> readNTFSTree(HANDLE device, uint64_t start, std::vector<ui
     return result;
 }
 
-void printFileAndFolderNTFS(std::vector<MFTEntry> list) {
+void printFolderTreeNTFS(std::vector<MFTEntry> list) {
     for (int i = 0; i < list.size(); i++) {
         std::wcout << L"No. " << i << std::endl;
         std::wcout << list[i] << std::endl;
@@ -617,7 +613,7 @@ void printFileAndFolderNTFS(std::vector<MFTEntry> list) {
     if (list.size() == 0) std::wcout << "There's no file or folder here!" << std::endl; 
 }
 
-void printFileAndFolderNoHidden(std::vector<MFTEntry> list) {
+void printNonHiddenFolderTreeNTFS(std::vector<MFTEntry> list) {
     int index = 1;
     for (int i = 0; i < list.size(); i++) {
         std::wstring temp = L"Hidden";

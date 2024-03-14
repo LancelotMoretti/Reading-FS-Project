@@ -14,7 +14,7 @@ private:
     uint64_t curEntry;
 
     // List of entries in current directory
-    std::vector<MFTEntry> MFTEntries;
+    std::vector<MFTEntry> Entries;
 
     // Methods for processing NTFS
     void ReadBootSector(std::vector<BYTE>& buffer);

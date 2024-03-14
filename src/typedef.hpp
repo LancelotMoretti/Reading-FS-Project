@@ -18,9 +18,9 @@
 #include <fcntl.h>
 
 // Define the meaning of flag of FAT32
-extern std::map<int, std::wstring> flag32ToMeaningMapping;
+extern std::map<int, std::wstring> fat32FlagToMeaning;
 
 // Define the meaning of flag of NTFS
-extern std::map<int, std::wstring> flagToMeaningMapping;
+extern std::map<int, std::wstring> ntfsFlagToMeaning;
 
 #endif /* TYPEDEF_HPP_ */

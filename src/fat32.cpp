@@ -1,6 +1,6 @@
 #include "fat32.hpp"
 
-////////////////////////////////////////////////////// Entry utilities ///////////////////////////////////////////////////////
+////////////////////////////////////////////////////// FATEntry utilities ///////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////// CLass Fat32 //////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ void Fat32::ReadAtPosition(uint64_t position) {
     else {
         this->Entries.push_back(
             readRDETSDET(this->VolumeHandle,
-                this->GetDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector,
+                this->ToDataCluster(this->Entries.back()[position].getStartCluster()) * this->BytesPerSector,
                 false
             )
         );
@@ -70,7 +70,7 @@ void Fat32::ViewVolumeInformation() {
 }
 
 void Fat32::ViewFolderTree() {
-    printFileAndFolder(this->Entries.back());
+    printFolderTreeFat32(this->Entries.back());
 }
 
 void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
@@ -87,18 +87,18 @@ void Fat32::ReadBootSector(std::vector<BYTE>& bootSector) {
     this->StartOfRDET = rdetStartPoint(bootSector.data()) * this->BytesPerSector;
 }
 
-void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
+void Fat32::ReadAndDisplayFileData(uint64_t startCLusterFATPos, uint64_t fileSize) {
     // Vector to store the data of a cluster
     std::vector<BYTE> buffer;
     buffer.resize(this->BytesPerSector * this->SectorsPerCluster);
 
     // Current cluster (in position) and remaining bytes to read
-    uint64_t currentCluster = startCluster;
+    uint64_t curClusterFATPos = startCLusterFATPos;
     uint64_t remainingBytes = fileSize;
     
-    while (remainingBytes > 0 && currentCluster <= 0x0FFFFFEF) {
+    while (remainingBytes > 0 && curClusterFATPos <= 0x0FFFFFEF) {
         // Read the data of the current cluster
-        this->ReadDataCluster(this->GetDataCluster(currentCluster), buffer);
+        this->ReadDataCluster(this->ToDataCluster(curClusterFATPos), buffer);
 
         // Number of bytes to read in the current cluster
         uint64_t bytesReaded = remainingBytes < (this->BytesPerSector * this->SectorsPerCluster)
@@ -111,38 +111,38 @@ void Fat32::ReadAndDisplayFileData(uint64_t startCluster, uint64_t fileSize) {
 
         // Update the remaining bytes and the current cluster
         remainingBytes -= bytesReaded;
-        currentCluster = this->GetNextFATCluster(currentCluster);
+        curClusterFATPos = this->GetNextClusterPos(curClusterFATPos);
     }
     std::wcout << std::endl << std::endl;
 }
 
-uint64_t Fat32::GetNextFATCluster(uint64_t currentCluster) {
+uint64_t Fat32::GetNextClusterPos(uint64_t curClusterFATPos) {
     // Calculate the begin of the FAT
     uint64_t BeginOfFat = this->SectorsPerBootSector;
 
     // If the current cluster is not in the first sector of the FAT
-    while (currentCluster > this->BytesPerSector / 4) {
-        currentCluster -= this->BytesPerSector / 4;
+    while (curClusterFATPos > this->BytesPerSector / 4) {
+        curClusterFATPos -= this->BytesPerSector / 4;
         BeginOfFat += this->BytesPerSector;
     }
 
     // Read the current FAT sector
     BYTE FAT[512];
-    readSector(this->VolumeHandle, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
+    readMultiSector(this->VolumeHandle, BeginOfFat * this->BytesPerSector, FAT, BytesPerSector);
 
     // Get the next cluster
-    uint64_t nextCluster = nBytesToNum(FAT, currentCluster * 4, 4);
+    uint64_t nextCluster = nBytesToNum(FAT, curClusterFATPos * 4, 4);
     return nextCluster;
 }
 
-uint64_t Fat32::GetDataCluster(uint64_t cluster) {
+uint64_t Fat32::ToDataCluster(uint64_t cluster) {
     return this->SectorsPerBootSector
         + (this->NumOfFAT * this->SectorsPerFAT)
         + (cluster - 2) * this->SectorsPerCluster;
 }
 
 void Fat32::ReadDataCluster(uint64_t cluster, std::vector<BYTE>& buffer) {
-    readSector(this->VolumeHandle,
+    readMultiSector(this->VolumeHandle,
         cluster * this->BytesPerSector,
         buffer.data(),
         this->BytesPerSector * this->SectorsPerCluster

@@ -6,15 +6,16 @@ NTFS::NTFS(std::vector<BYTE>& bootSector, HANDLE volumeHandle) : Volume(volumeHa
     // Read root directory
     this->curEntry = uint64_t(5);
     uint64_t start = this->curEntry * 1024 + this->StartOfMFT * this->BytesPerSector;
-    std::vector<uint64_t> listEntries = readFolder(this->VolumeHandle, start);
+    std::vector<uint64_t> listEntries = readFolderEntry(this->VolumeHandle, start);
     formatListEntries(listEntries);
-    this->MFTEntries = readNTFSTree(this->VolumeHandle,
+    this->Entries = readNTFSTree(this->VolumeHandle,
         this->StartOfMFT * this->BytesPerSector,
         listEntries
     );
 }
 
 void NTFS::SetCurEntry(uint64_t entry) {
+    if (entry < 0) return;
     this->curEntry = entry;
 }
 
@@ -27,28 +28,28 @@ std::string NTFS::GetFileSystemType() {
 }
 
 void NTFS::ReadAtPosition(uint64_t position) {
-    if (position >= this->MFTEntries.size()) {
+    if (position >= this->Entries.size()) {
         std::wcout << "Invalid position!" << std::endl;
         return;
     }
 
-    if (this->MFTEntries[position].getType().find(L"File") != std::wstring::npos) {
-        if (this->MFTEntries[position].getExt() == L"txt") {
+    if (this->Entries[position].getType().find(L"File") != std::wstring::npos) {
+        if (this->Entries[position].getExt() == L"txt") {
             std::wcout << "File content: " << std::endl;
-            this->ReadAndDisplayFileData(this->MFTEntries[position].getEntry());
+            this->ReadAndDisplayFileData(this->Entries[position].getEntry());
             system("pause");
         }
         else {
             std::wcout << "File type not supported!" << std::endl;
-            std::wcout << "Please use the reader for the file type: " << this->MFTEntries[position].getExt() << std::endl;
+            std::wcout << "Please use the reader for the file type: " << this->Entries[position].getExt() << std::endl;
         }
     }
     else {
-        uint64_t start = this->MFTEntries[position].getEntry() * 1024 + this->StartOfMFT * this->BytesPerSector;
-        this->curEntry = this->MFTEntries[position].getEntry();
-        std::vector<uint64_t> listEntries = readFolder(this->VolumeHandle, start);
+        uint64_t start = this->Entries[position].getEntry() * 1024 + this->StartOfMFT * this->BytesPerSector;
+        this->curEntry = this->Entries[position].getEntry();
+        std::vector<uint64_t> listEntries = readFolderEntry(this->VolumeHandle, start);
         formatListEntries(listEntries);
-        this->MFTEntries = readNTFSTree(this->VolumeHandle,
+        this->Entries = readNTFSTree(this->VolumeHandle,
             this->StartOfMFT * this->BytesPerSector,
             listEntries
         );
@@ -60,9 +61,9 @@ void NTFS::ReturnToRoot() {
     this->curEntry = uint64_t(5);
     // Read root directory
     uint64_t start = this->curEntry * 1024 + this->StartOfMFT * this->BytesPerSector;
-    std::vector<uint64_t> listEntries = readFolder(this->VolumeHandle, start);
+    std::vector<uint64_t> listEntries = readFolderEntry(this->VolumeHandle, start);
     formatListEntries(listEntries);
-    this->MFTEntries = readNTFSTree(this->VolumeHandle,
+    this->Entries = readNTFSTree(this->VolumeHandle,
         this->StartOfMFT * this->BytesPerSector,
         listEntries
     );
@@ -97,9 +98,9 @@ void NTFS::ReturnToParent() {
 
     // Read parent directory
     uint64_t start = this->curEntry * 1024 + this->StartOfMFT * this->BytesPerSector;
-    std::vector<uint64_t> listEntries = readFolder(this->VolumeHandle, start);
+    std::vector<uint64_t> listEntries = readFolderEntry(this->VolumeHandle, start);
     formatListEntries(listEntries);
-    this->MFTEntries = readNTFSTree(this->VolumeHandle,
+    this->Entries = readNTFSTree(this->VolumeHandle,
         this->StartOfMFT * this->BytesPerSector,
         listEntries
     );
@@ -118,7 +119,7 @@ void NTFS::ViewVolumeInformation() {
 }
 
 void NTFS::ViewFolderTree() {
-    printFileAndFolderNTFS(this->MFTEntries);
+    printFolderTreeNTFS(this->Entries);
 }
 
 void NTFS::ReadBootSector(std::vector<BYTE>& bootSector) {
@@ -159,7 +160,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
 
     std::vector<BYTE> buffer(1024);
 
-    readSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
+    readMultiSector(this->VolumeHandle, this->StartOfMFT * this->BytesPerSector + mftEntry * 1024, buffer.data(), 1024); // Read MFT entry
 
     attributeOffset = nBytesToNum(buffer.data(), 0x14, 2); // Offset to the first attribute
 
@@ -198,7 +199,7 @@ void NTFS::ReadAndDisplayFileData(uint64_t mftEntry) {
 
                     // Read data and display
                     for (int i = 0; i < dataSize; i++) {
-                        readSector(this->VolumeHandle,
+                        readMultiSector(this->VolumeHandle,
                             (dataStart + i) * this->SectorsPerCluster * this->BytesPerSector,
                             content.data(),
                             this->BytesPerSector * this->SectorsPerCluster
