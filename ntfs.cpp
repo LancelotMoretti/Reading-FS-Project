@@ -36,6 +36,7 @@ void NTFS::ReadAtPosition(uint64_t position) {
         if (this->MFTEntries[position].getExt() == L"txt") {
             std::wcout << "File content: " << std::endl;
             this->ReadAndDisplayFileData(this->MFTEntries[position].getEntry());
+            system("pause");
         }
         else {
             std::wcout << "File type not supported!" << std::endl;
